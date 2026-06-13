@@ -73,9 +73,6 @@ function CoursePage() {
     },
   });
 
-  if (isLoading) return <div className="container mx-auto p-10">چاوەڕێبە...</div>;
-  if (!course) return <div className="container mx-auto p-10">کۆرسەکە نەدۆزرایەوە</div>;
-
   const enrolled = !!enrollment;
   const current = lessons?.find(l => l.id === activeLesson) ?? lessons?.[0];
   const canPlay = !!current && (enrolled || current.is_preview);
@@ -89,6 +86,9 @@ function CoursePage() {
       return data as string | null;
     },
   });
+
+  if (isLoading) return <div className="container mx-auto p-10">چاوەڕێبە...</div>;
+  if (!course) return <div className="container mx-auto p-10">کۆرسەکە نەدۆزرایەوە</div>;
 
   return (
     <div className="container mx-auto grid gap-8 px-4 py-10 lg:grid-cols-[1fr_360px]">
