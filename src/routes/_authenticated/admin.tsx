@@ -55,14 +55,15 @@ function TopupsTab() {
 
   const review = useMutation({
     mutationFn: async ({ id, approve, note }: { id: string; approve: boolean; note?: string }) => {
-      const { error } = await supabase.rpc("review_topup", { _topup_id: id, _approve: approve, _admin_note: note ?? null });
+      const { error } = await supabase.rpc("review_topup", { _topup_id: id, _approve: approve, _admin_note: note });
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-topups"] }); toast.success("کرا"); },
     onError: (e: any) => toast.error(e.message),
   });
 
-  async function viewProof(path: string) {
+  async function viewProof(path: string | null) {
+    if (!path) return;
     const { data } = await supabase.storage.from("payment-proofs").createSignedUrl(path, 300);
     if (data?.signedUrl) window.open(data.signedUrl, "_blank");
   }
