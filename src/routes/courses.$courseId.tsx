@@ -33,7 +33,10 @@ function CoursePage() {
     queryKey: ["lessons", courseId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("lessons").select("*").eq("course_id", courseId).order("order_index");
+        .from("lessons")
+        .select("id,course_id,title,description,duration_seconds,order_index,is_preview")
+        .eq("course_id", courseId)
+        .order("order_index");
       if (error) throw error;
       return data;
     },
@@ -70,18 +73,29 @@ function CoursePage() {
     },
   });
 
-  if (isLoading) return <div className="container mx-auto p-10">چاوەڕێبە...</div>;
-  if (!course) return <div className="container mx-auto p-10">کۆرسەکە نەدۆزرایەوە</div>;
-
   const enrolled = !!enrollment;
   const current = lessons?.find(l => l.id === activeLesson) ?? lessons?.[0];
+  const canPlay = !!current && (enrolled || current.is_preview);
+
+  const { data: videoUrl } = useQuery({
+    queryKey: ["lesson-video", current?.id, enrolled],
+    enabled: canPlay,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_lesson_video", { _lesson_id: current!.id });
+      if (error) throw error;
+      return data as string | null;
+    },
+  });
+
+  if (isLoading) return <div className="container mx-auto p-10">چاوەڕێبە...</div>;
+  if (!course) return <div className="container mx-auto p-10">کۆرسەکە نەدۆزرایەوە</div>;
 
   return (
     <div className="container mx-auto grid gap-8 px-4 py-10 lg:grid-cols-[1fr_360px]">
       <div className="space-y-6">
         <div className="aspect-video overflow-hidden rounded-xl bg-black">
-          {current && (enrolled || current.is_preview) && current.video_url ? (
-            <video key={current.id} controls className="h-full w-full" src={current.video_url} />
+          {current && (enrolled || current.is_preview) && videoUrl ? (
+            <video key={current.id} controls className="h-full w-full" src={videoUrl} />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-3 text-white/80">
               <Lock className="h-12 w-12" />

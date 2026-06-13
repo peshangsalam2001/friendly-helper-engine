@@ -202,7 +202,7 @@ function LessonsTab() {
     queryKey: ["admin-lessons", courseId],
     enabled: !!courseId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("lessons").select("*").eq("course_id", courseId).order("order_index");
+      const { data, error } = await supabase.from("lessons").select("id,course_id,title,description,duration_seconds,order_index,is_preview,created_at").eq("course_id", courseId).order("order_index");
       if (error) throw error;
       return data;
     },
