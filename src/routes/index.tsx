@@ -1,29 +1,118 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { GraduationCap, Wallet, ShieldCheck, PlayCircle } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Your App" },
-      { name: "description", content: "Replace this with a one-sentence description of your app." },
-      { property: "og:title", content: "Your App" },
-      { property: "og:description", content: "Replace this with a one-sentence description of your app." },
+      { title: "فێرگە — پلاتفۆڕمی کۆرسی ئۆنلاین" },
+      { name: "description", content: "فێرگەی ئۆنلاین بە زمانی کوردی. کۆرسی ڤیدیۆیی کڕە و فێربە." },
+      { property: "og:title", content: "فێرگە — پلاتفۆڕمی کۆرسی ئۆنلاین" },
+      { property: "og:description", content: "کۆرسی ڤیدیۆیی بە زمانی کوردی." },
     ],
   }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
+  const { data: courses } = useQuery({
+    queryKey: ["featured-courses"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("courses")
+        .select("id, title, description, price, thumbnail_url")
+        .eq("is_published", true)
+        .order("created_at", { ascending: false })
+        .limit(6);
+      if (error) throw error;
+      return data;
+    },
+  });
+
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
+    <div className="flex min-h-screen flex-col">
+      <SiteHeader />
+      <main className="flex-1">
+        <section className="relative overflow-hidden border-b bg-gradient-to-bl from-primary/10 via-background to-background">
+          <div className="container mx-auto grid gap-10 px-4 py-16 md:grid-cols-2 md:py-24">
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1 text-xs font-medium">
+                <GraduationCap className="h-3.5 w-3.5 text-primary" />
+                فێرگەی ئۆنلاین بە زمانی کوردی
+              </div>
+              <h1 className="text-4xl font-extrabold leading-tight md:text-5xl">
+                فێربە، بەرەوپێش بچۆ —<br />
+                لە هەر کاتێک و لە هەر شوێنێک
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                کۆرسی تایبەت بە چەندین بوار. باڵانسەکەت زیاد بکە بە ئێف ئایبی، فاستپەی یاخود سوپەرکی،
+                دواتر کۆرسەکانی دڵخوازت بکڕە.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link to="/courses"><Button size="lg">بینینی کۆرسەکان</Button></Link>
+                <Link to="/guide"><Button size="lg" variant="outline">چۆن کاردەکات؟</Button></Link>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { icon: PlayCircle, t: "ڤیدیۆ بەرز", d: "وانە بە کوالیتی بەرز" },
+                { icon: Wallet, t: "باڵانس", d: "زیادکردن بە ئاسانی" },
+                { icon: ShieldCheck, t: "پارێزراو", d: "پارەکانت لە پارێزراویدا" },
+                { icon: GraduationCap, t: "سەرتیفیکات", d: "بەڵگەی تەواوکردن" },
+              ].map((f) => (
+                <Card key={f.t} className="border-primary/10">
+                  <CardContent className="space-y-2 p-5">
+                    <f.icon className="h-6 w-6 text-primary" />
+                    <div className="font-semibold">{f.t}</div>
+                    <div className="text-sm text-muted-foreground">{f.d}</div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="container mx-auto px-4 py-16">
+          <div className="mb-8 flex items-end justify-between">
+            <div>
+              <h2 className="text-2xl font-bold md:text-3xl">کۆرسە تازەکان</h2>
+              <p className="text-muted-foreground">نوێترین وانەکانی پلاتفۆڕم</p>
+            </div>
+            <Link to="/courses"><Button variant="ghost">بینینی هەموو ←</Button></Link>
+          </div>
+          {!courses?.length ? (
+            <div className="rounded-xl border border-dashed p-12 text-center text-muted-foreground">
+              هێشتا هیچ کۆرسێک زیاد نەکراوە
+            </div>
+          ) : (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {courses.map((c) => (
+                <Link key={c.id} to="/courses/$courseId" params={{ courseId: c.id }}>
+                  <Card className="h-full overflow-hidden transition hover:border-primary hover:shadow-lg">
+                    <div className="aspect-video bg-gradient-to-br from-primary/20 to-secondary">
+                      {c.thumbnail_url && (
+                        <img src={c.thumbnail_url} alt={c.title} className="h-full w-full object-cover" loading="lazy" />
+                      )}
+                    </div>
+                    <CardContent className="space-y-2 p-5">
+                      <h3 className="line-clamp-1 font-bold">{c.title}</h3>
+                      <p className="line-clamp-2 min-h-[2.5rem] text-sm text-muted-foreground">{c.description}</p>
+                      <div className="font-bold text-primary">{Number(c.price).toLocaleString()} د.ع</div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
+      <SiteFooter />
     </div>
   );
 }
