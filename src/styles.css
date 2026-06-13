@@ -141,5 +141,10 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: "Vazirmatn", system-ui, -apple-system, sans-serif;
+  }
+
+  html[dir="rtl"] {
+    direction: rtl;
   }
 }
