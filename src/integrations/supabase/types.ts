@@ -249,6 +249,44 @@ export type Database = {
         }
         Returns: boolean
       }
+      purchase_course: {
+        Args: { _course_id: string }
+        Returns: {
+          course_id: string
+          created_at: string
+          id: string
+          price_paid: number
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "enrollments"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      review_topup: {
+        Args: { _admin_note?: string; _approve: boolean; _topup_id: string }
+        Returns: {
+          admin_note: string | null
+          amount: number
+          created_at: string
+          id: string
+          method: Database["public"]["Enums"]["topup_method"]
+          note: string | null
+          proof_url: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["topup_status"]
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "topup_requests"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       app_role: "admin" | "user"
