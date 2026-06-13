@@ -54,16 +54,6 @@ function CoursePage() {
     },
   });
 
-  const { data: videoUrl } = useQuery({
-    queryKey: ["lesson-video", activeLesson],
-    enabled: !!activeLesson,
-    queryFn: async () => {
-      const { data, error } = await supabase.rpc("get_lesson_video", { _lesson_id: activeLesson! });
-      if (error) throw error;
-      return data as string | null;
-    },
-  });
-
   const purchase = useMutation({
     mutationFn: async () => {
       const { data, error } = await supabase.rpc("purchase_course", { _course_id: courseId });
