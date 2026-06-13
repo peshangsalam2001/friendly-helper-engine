@@ -78,6 +78,17 @@ function CoursePage() {
 
   const enrolled = !!enrollment;
   const current = lessons?.find(l => l.id === activeLesson) ?? lessons?.[0];
+  const canPlay = !!current && (enrolled || current.is_preview);
+
+  const { data: videoUrl } = useQuery({
+    queryKey: ["lesson-video", current?.id, enrolled],
+    enabled: canPlay,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_lesson_video", { _lesson_id: current!.id });
+      if (error) throw error;
+      return data as string | null;
+    },
+  });
 
   return (
     <div className="container mx-auto grid gap-8 px-4 py-10 lg:grid-cols-[1fr_360px]">
