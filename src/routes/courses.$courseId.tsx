@@ -19,8 +19,11 @@ function resolveVideo(url: string | null | undefined): { kind: "iframe" | "video
   if (drive) return { kind: "iframe", src: `https://drive.google.com/file/d/${drive[1]}/preview` };
   const yt = u.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
   if (yt) return { kind: "iframe", src: `https://www.youtube.com/embed/${yt[1]}` };
-  const vimeo = u.match(/vimeo\.com\/(\d+)/);
-  if (vimeo) return { kind: "iframe", src: `https://player.vimeo.com/video/${vimeo[1]}` };
+  const vimeo = u.match(/vimeo\.com\/(?:video\/)?(\d+)(?:\/([a-zA-Z0-9]+))?/);
+  if (vimeo) {
+    const hash = vimeo[2] ? `?h=${vimeo[2]}` : "";
+    return { kind: "iframe", src: `https://player.vimeo.com/video/${vimeo[1]}${hash}` };
+  }
   if (/\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/i.test(u)) return { kind: "video", src: u };
   return { kind: "iframe", src: u };
 }
