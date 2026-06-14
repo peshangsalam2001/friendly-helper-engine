@@ -137,13 +137,7 @@ function CoursePage() {
             const v = canPlay ? resolveVideo(videoUrl) : null;
             if (current && v) {
               return v.kind === "video" ? (
-                <video
-                  key={current.id}
-                  controls
-                  controlsList="nodownload-disabled"
-                  className="h-full w-full"
-                  src={v.src}
-                />
+                <video key={current.id} controls className="h-full w-full" src={v.src} />
               ) : (
                 <iframe
                   key={current.id}
@@ -164,6 +158,19 @@ function CoursePage() {
         </div>
         <div>
           <h1 className="text-3xl font-bold">{course.title}</h1>
+          {canPlay && videoUrl && (
+            <div className="mt-3">
+              <a
+                href={videoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                download
+                className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-muted"
+              >
+                داگرتنی ڤیدیۆ
+              </a>
+            </div>
+          )}
           <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
             {course.teacher && <span className="flex items-center gap-1"><User className="h-4 w-4" /> مامۆستا: {course.teacher}</span>}
             <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {(buyerCount ?? 0).toLocaleString()} قوتابی</span>
