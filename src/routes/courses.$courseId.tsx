@@ -21,8 +21,16 @@ function resolveVideo(url: string | null | undefined): { kind: "iframe" | "video
   if (yt) return { kind: "iframe", src: `https://www.youtube.com/embed/${yt[1]}` };
   const vimeo = u.match(/vimeo\.com\/(?:video\/)?(\d+)(?:\/([a-zA-Z0-9]+))?/);
   if (vimeo) {
-    const hash = vimeo[2] ? `?h=${vimeo[2]}` : "";
-    return { kind: "iframe", src: `https://player.vimeo.com/video/${vimeo[1]}${hash}` };
+    const params = new URLSearchParams({
+      title: "0",
+      byline: "0",
+      portrait: "0",
+      badge: "0",
+      pip: "0",
+      dnt: "1",
+    });
+    if (vimeo[2]) params.set("h", vimeo[2]);
+    return { kind: "iframe", src: `https://player.vimeo.com/video/${vimeo[1]}?${params.toString()}` };
   }
   if (/\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/i.test(u)) return { kind: "video", src: u };
   return { kind: "iframe", src: u };
@@ -150,6 +158,19 @@ function CoursePage() {
         </div>
         <div>
           <h1 className="text-3xl font-bold">{course.title}</h1>
+          {canPlay && videoUrl && (
+            <div className="mt-3">
+              <a
+                href={videoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                download
+                className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-muted"
+              >
+                داگرتنی ڤیدیۆ
+              </a>
+            </div>
+          )}
           <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
             {course.teacher && <span className="flex items-center gap-1"><User className="h-4 w-4" /> مامۆستا: {course.teacher}</span>}
             <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {(buyerCount ?? 0).toLocaleString()} قوتابی</span>
