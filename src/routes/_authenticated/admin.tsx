@@ -242,17 +242,24 @@ function LessonsTab() {
       const payload: any = {
         course_id: courseId, title: form.title,
         description: form.description || null,
-        video_url: form.video_url || null,
         duration_seconds: Number(form.duration_seconds) || 0,
         order_index: Number(form.order_index)||0,
         is_preview: form.is_preview,
       };
+      let lessonId = form.id;
       if (editingL) {
         const { error } = await supabase.from("lessons").update(payload).eq("id", form.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("lessons").insert(payload);
+        const { data, error } = await supabase.from("lessons").insert(payload).select("id").single();
         if (error) throw error;
+        lessonId = data.id;
+      }
+      if (form.video_url !== undefined && (form.video_url || editingL)) {
+        const { error: vErr } = await (supabase as any).rpc("set_lesson_video", {
+          _lesson_id: lessonId, _video_url: form.video_url || null,
+        });
+        if (vErr) throw vErr;
       }
     },
     onSuccess: () => {
