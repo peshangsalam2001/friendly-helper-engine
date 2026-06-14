@@ -181,6 +181,32 @@ export type Database = {
           },
         ]
       }
+      lesson_videos: {
+        Row: {
+          lesson_id: string
+          updated_at: string
+          video_url: string
+        }
+        Insert: {
+          lesson_id: string
+          updated_at?: string
+          video_url: string
+        }
+        Update: {
+          lesson_id?: string
+          updated_at?: string
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_videos_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: true
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lessons: {
         Row: {
           course_id: string
@@ -191,7 +217,6 @@ export type Database = {
           is_preview: boolean
           order_index: number
           title: string
-          video_url: string | null
         }
         Insert: {
           course_id: string
@@ -202,7 +227,6 @@ export type Database = {
           is_preview?: boolean
           order_index?: number
           title: string
-          video_url?: string | null
         }
         Update: {
           course_id?: string
@@ -213,7 +237,6 @@ export type Database = {
           is_preview?: boolean
           order_index?: number
           title?: string
-          video_url?: string | null
         }
         Relationships: [
           {
@@ -479,6 +502,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      set_lesson_video: {
+        Args: { _lesson_id: string; _video_url: string }
+        Returns: undefined
       }
       start_dm: { Args: { _other: string }; Returns: string }
       start_support_chat: { Args: never; Returns: string }
