@@ -6,6 +6,7 @@ import { GraduationCap, LogOut, Menu, Wallet } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useQueryClient } from "@tanstack/react-query";
+import { NotificationsBell } from "@/components/notifications-bell";
 
 function NavLinks({ onClick }: { onClick?: () => void }) {
   const { user } = useAuth();
@@ -56,6 +57,7 @@ export function SiteHeader() {
         <div className="hidden items-center gap-2 md:flex">
           {user ? (
             <>
+              <NotificationsBell />
               <Link to="/topup">
                 <Button variant="secondary" size="sm" className="gap-2">
                   <Wallet className="h-4 w-4" />

@@ -14,6 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
+      chat_messages: {
+        Row: {
+          body: string
+          conversation_id: string
+          created_at: string
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          body: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          body?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_participants: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          last_read_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          last_read_at?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          last_read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_participants_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          course_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          title: string | null
+          type: Database["public"]["Enums"]["conversation_type"]
+          updated_at: string
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          title?: string | null
+          type: Database["public"]["Enums"]["conversation_type"]
+          updated_at?: string
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          title?: string | null
+          type?: Database["public"]["Enums"]["conversation_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       courses: {
         Row: {
           created_at: string
@@ -153,6 +252,66 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          announcement: boolean
+          balance_update: boolean
+          chat_message: boolean
+          new_course: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          announcement?: boolean
+          balance_update?: boolean
+          chat_message?: boolean
+          new_course?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          announcement?: boolean
+          balance_update?: boolean
+          chat_message?: boolean
+          new_course?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          link: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          link?: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          link?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           balance: number
@@ -242,9 +401,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_profiles: {
+        Row: {
+          full_name: string | null
+          id: string | null
+        }
+        Insert: {
+          full_name?: string | null
+          id?: string | null
+        }
+        Update: {
+          full_name?: string | null
+          id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      get_announcement_conversation: { Args: never; Returns: string }
       get_course_buyer_count: { Args: { _course_id: string }; Returns: number }
       get_course_total_duration: {
         Args: { _course_id: string }
@@ -257,6 +431,16 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      is_conversation_participant: {
+        Args: { _conv: string; _user: string }
+        Returns: boolean
+      }
+      mark_all_notifications_read: { Args: never; Returns: undefined }
+      mark_conversation_read: { Args: { _conv: string }; Returns: undefined }
+      post_announcement: {
+        Args: { _body: string; _title: string }
+        Returns: string
       }
       purchase_course: {
         Args: { _course_id: string }
@@ -296,9 +480,19 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      start_dm: { Args: { _other: string }; Returns: string }
+      start_support_chat: { Args: never; Returns: string }
     }
     Enums: {
       app_role: "admin" | "user"
+      conversation_type: "dm" | "support" | "course_group" | "announcement"
+      notification_type:
+        | "new_course"
+        | "balance_approved"
+        | "balance_rejected"
+        | "announcement"
+        | "chat_message"
+        | "enrollment"
       topup_method: "fib" | "fastpay" | "superqi"
       topup_status: "pending" | "approved" | "rejected"
     }
@@ -429,6 +623,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      conversation_type: ["dm", "support", "course_group", "announcement"],
+      notification_type: [
+        "new_course",
+        "balance_approved",
+        "balance_rejected",
+        "announcement",
+        "chat_message",
+        "enrollment",
+      ],
       topup_method: ["fib", "fastpay", "superqi"],
       topup_status: ["pending", "approved", "rejected"],
     },
