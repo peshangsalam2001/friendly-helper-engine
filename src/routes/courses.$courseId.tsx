@@ -12,6 +12,19 @@ export const Route = createFileRoute("/courses/$courseId")({
   component: CoursePage,
 });
 
+function resolveVideo(url: string | null | undefined): { kind: "iframe" | "video"; src: string } | null {
+  if (!url) return null;
+  const u = url.trim();
+  const drive = u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([a-zA-Z0-9_-]+)/);
+  if (drive) return { kind: "iframe", src: `https://drive.google.com/file/d/${drive[1]}/preview` };
+  const yt = u.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+  if (yt) return { kind: "iframe", src: `https://www.youtube.com/embed/${yt[1]}` };
+  const vimeo = u.match(/vimeo\.com\/(\d+)/);
+  if (vimeo) return { kind: "iframe", src: `https://player.vimeo.com/video/${vimeo[1]}` };
+  if (/\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/i.test(u)) return { kind: "video", src: u };
+  return { kind: "iframe", src: u };
+}
+
 function CoursePage() {
   const { courseId } = Route.useParams();
   const { user } = useAuth();
@@ -109,14 +122,28 @@ function CoursePage() {
     <div className="container mx-auto grid gap-8 px-4 py-10 lg:grid-cols-[1fr_360px]">
       <div className="space-y-6">
         <div className="aspect-video overflow-hidden rounded-xl bg-black">
-          {current && (enrolled || current.is_preview) && videoUrl ? (
-            <video key={current.id} controls className="h-full w-full" src={videoUrl} />
-          ) : (
-            <div className="flex h-full flex-col items-center justify-center gap-3 text-white/80">
-              <Lock className="h-12 w-12" />
-              <p>بۆ بینینی وانەکان پێویستە کۆرسەکە بکڕیت</p>
-            </div>
-          )}
+          {(() => {
+            const v = canPlay ? resolveVideo(videoUrl) : null;
+            if (current && v) {
+              return v.kind === "video" ? (
+                <video key={current.id} controls className="h-full w-full" src={v.src} />
+              ) : (
+                <iframe
+                  key={current.id}
+                  src={v.src}
+                  className="h-full w-full"
+                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                  allowFullScreen
+                />
+              );
+            }
+            return (
+              <div className="flex h-full flex-col items-center justify-center gap-3 text-white/80">
+                <Lock className="h-12 w-12" />
+                <p>بۆ بینینی وانەکان پێویستە کۆرسەکە بکڕیت</p>
+              </div>
+            );
+          })()}
         </div>
         <div>
           <h1 className="text-3xl font-bold">{course.title}</h1>

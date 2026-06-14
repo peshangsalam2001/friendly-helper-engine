@@ -295,9 +295,8 @@ function LessonsTab() {
             <form onSubmit={(e)=>{e.preventDefault(); create.mutate();}} className="grid gap-3 sm:grid-cols-2">
               <div className="sm:col-span-2"><Label>ناونیشان</Label><Input required value={form.title} onChange={e=>setForm({...form,title:e.target.value})} /></div>
               <div className="sm:col-span-2"><Label>وەسف</Label><Textarea value={form.description} onChange={e=>setForm({...form,description:e.target.value})} rows={2} /></div>
-              <div className="sm:col-span-2"><Label>بەستەری ڤیدیۆ (Google Drive یاخود ...)</Label><Input value={form.video_url} onChange={e=>setForm({...form,video_url:e.target.value})} placeholder="https://drive.google.com/..." /></div>
-              <div><Label>درێژی بە چرکە</Label><Input type="number" value={form.duration_seconds} onChange={e=>setForm({...form,duration_seconds:e.target.value})} /></div>
-              <div><Label>ڕیزبەندی</Label><Input type="number" value={form.order_index} onChange={e=>setForm({...form,order_index:e.target.value})} /></div>
+              <div className="sm:col-span-2"><Label>بەستەری ڤیدیۆ (Google Drive، YouTube، Vimeo، یاخود هەر بەستەرێکی ڤیدیۆ)</Label><Input value={form.video_url} onChange={e=>setForm({...form,video_url:e.target.value})} placeholder="https://..." /></div>
+              <div className="sm:col-span-2"><Label>ڕیزبەندی</Label><Input type="number" value={form.order_index} onChange={e=>setForm({...form,order_index:e.target.value})} /></div>
               <label className="flex items-end gap-2 sm:col-span-2"><input type="checkbox" checked={form.is_preview} onChange={e=>setForm({...form,is_preview:e.target.checked})} /> نموونەی بێبەرامبەر</label>
               <Button className="sm:col-span-2" disabled={create.isPending}>{editingL ? "پاشەکەوت" : "زیادکردن"}</Button>
               {editingL && <Button type="button" variant="outline" className="sm:col-span-2" onClick={()=>setForm(emptyL)}>پاشگەزبوونەوە</Button>}
