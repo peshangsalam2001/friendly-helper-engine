@@ -1,10 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth, useProfile } from "@/lib/auth";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, BookOpen, Mail } from "lucide-react";
+import { Wallet, BookOpen, Mail, Bell } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "sonner";
+
+const sb = supabase as any;
 
 export const Route = createFileRoute("/_authenticated/account")({
   component: Account,
@@ -106,6 +110,53 @@ function Account() {
           </ul>
         )}
       </CardContent></Card>
+
+      <h2 className="mb-3 mt-8 text-xl font-bold flex items-center gap-2"><Bell className="h-5 w-5" /> ڕێکخستنی ئاگاداری</h2>
+      <NotificationPrefs />
     </div>
+  );
+}
+
+function NotificationPrefs() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const { data: prefs } = useQuery({
+    queryKey: ["notif-prefs", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await sb.from("notification_preferences").select("*").eq("user_id", user!.id).maybeSingle();
+      if (error) throw error;
+      return data || { user_id: user!.id, new_course: true, balance_update: true, announcement: true, chat_message: true };
+    },
+  });
+
+  const update = useMutation({
+    mutationFn: async (patch: Record<string, boolean>) => {
+      const { error } = await sb.from("notification_preferences").upsert({ user_id: user!.id, ...prefs, ...patch });
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["notif-prefs"] }); toast.success("ڕێکخرا"); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const rows: { key: string; label: string }[] = [
+    { key: "new_course", label: "کۆرسی نوێ" },
+    { key: "balance_update", label: "گۆڕانی باڵانس" },
+    { key: "announcement", label: "ڕاگەیاندنەکان" },
+    { key: "chat_message", label: "نامەی نوێ" },
+  ];
+
+  return (
+    <Card><CardContent className="divide-y p-0">
+      {rows.map(r => (
+        <div key={r.key} className="flex items-center justify-between p-4">
+          <span className="text-sm font-medium">{r.label}</span>
+          <Switch
+            checked={!!prefs?.[r.key]}
+            onCheckedChange={(v) => update.mutate({ [r.key]: v })}
+          />
+        </div>
+      ))}
+    </CardContent></Card>
   );
 }
