@@ -15,6 +15,9 @@ export const Route = createFileRoute("/_authenticated/topup")({ component: Topup
 
 const FIB_NUMBER = "07701669021";
 
+const ALLOWED_MIME = ["image/jpeg","image/png","image/webp","image/gif"];
+const ALLOWED_EXT = /\.(jpe?g|png|webp|gif)$/i;
+
 function Topup() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -29,10 +32,17 @@ function Topup() {
     const amt = Number(amount);
     if (!amt || amt < 1000) { toast.error("بڕێکی دروست بنووسە (لانیکەم ١٠٠٠ د.ع)"); return; }
     if (!file) { toast.error("تکایە وێنەی بەڵگەی پارەدان زیاد بکە"); return; }
+    if (!ALLOWED_MIME.includes(file.type) || !ALLOWED_EXT.test(file.name)) {
+      toast.error("تەنیا وێنە (JPG, PNG, WEBP, GIF) ڕێگەپێدراوە"); return;
+    }
+    if (file.size > 5 * 1024 * 1024) { toast.error("قەبارەی وێنە دەبێت کەمتر بێت لە ٥ مێگابایت"); return; }
     setLoading(true);
     try {
-      const path = `${user!.id}/${Date.now()}-${file.name}`;
-      const { error: upErr } = await supabase.storage.from("payment-proofs").upload(path, file);
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_").slice(-80);
+      const path = `${user!.id}/${Date.now()}-${safeName}`;
+      const { error: upErr } = await supabase.storage.from("payment-proofs").upload(path, file, {
+        contentType: file.type, upsert: false,
+      });
       if (upErr) throw upErr;
       const { error: insErr } = await supabase.from("topup_requests").insert({
         user_id: user!.id, amount: amt, method, proof_url: path, note,
