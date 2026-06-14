@@ -46,7 +46,7 @@ export function SiteHeader() {
           <div className="grid h-9 w-9 place-items-center rounded-lg bg-primary text-primary-foreground">
             <GraduationCap className="h-5 w-5" />
           </div>
-          <span className="text-lg font-bold">فێرگە</span>
+          <span className="text-lg font-bold">ئەکادیمیای پێشەنگ</span>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
