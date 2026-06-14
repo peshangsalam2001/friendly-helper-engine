@@ -11,6 +11,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Plus, Trash2, ExternalLink, Check, X, Pencil, Upload } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { mirrorToExternalSupabase } from "@/lib/mirror.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   beforeLoad: async () => {
@@ -32,12 +34,41 @@ function Admin() {
           <TabsTrigger value="topups">داواکاری باڵانس</TabsTrigger>
           <TabsTrigger value="courses">کۆرسەکان</TabsTrigger>
           <TabsTrigger value="lessons">وانەکان</TabsTrigger>
+          <TabsTrigger value="mirror">Mirror</TabsTrigger>
         </TabsList>
         <TabsContent value="topups" className="mt-6"><TopupsTab /></TabsContent>
         <TabsContent value="courses" className="mt-6"><CoursesTab /></TabsContent>
         <TabsContent value="lessons" className="mt-6"><LessonsTab /></TabsContent>
+        <TabsContent value="mirror" className="mt-6"><MirrorTab /></TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function MirrorTab() {
+  const run = useServerFn(mirrorToExternalSupabase);
+  const [result, setResult] = useState<Record<string, { rows: number; error?: string }> | null>(null);
+  const m = useMutation({
+    mutationFn: async () => await run(),
+    onSuccess: (r: any) => { setResult(r.results); toast.success("Mirror done"); },
+    onError: (e: any) => toast.error(e?.message ?? "Failed"),
+  });
+  return (
+    <Card><CardContent className="space-y-4 p-6">
+      <p className="text-sm text-muted-foreground">Copy all tables to your external Supabase (one-way, upsert).</p>
+      <Button onClick={() => m.mutate()} disabled={m.isPending}>
+        {m.isPending ? "Mirroring..." : "Run mirror now"}
+      </Button>
+      {result && (
+        <div className="space-y-1 text-sm">
+          {Object.entries(result).map(([t, r]) => (
+            <div key={t} className={r.error ? "text-destructive" : ""}>
+              {t}: {r.rows} rows {r.error ? `— ${r.error}` : "✓"}
+            </div>
+          ))}
+        </div>
+      )}
+    </CardContent></Card>
   );
 }
 
