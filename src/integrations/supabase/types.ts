@@ -21,6 +21,7 @@ export type Database = {
           id: string
           is_published: boolean
           price: number
+          teacher: string | null
           thumbnail_url: string | null
           title: string
           updated_at: string
@@ -31,6 +32,7 @@ export type Database = {
           id?: string
           is_published?: boolean
           price?: number
+          teacher?: string | null
           thumbnail_url?: string | null
           title: string
           updated_at?: string
@@ -41,6 +43,7 @@ export type Database = {
           id?: string
           is_published?: boolean
           price?: number
+          teacher?: string | null
           thumbnail_url?: string | null
           title?: string
           updated_at?: string
@@ -242,6 +245,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_course_buyer_count: { Args: { _course_id: string }; Returns: number }
+      get_course_total_duration: {
+        Args: { _course_id: string }
+        Returns: number
+      }
       get_lesson_video: { Args: { _lesson_id: string }; Returns: string }
       has_role: {
         Args: {
