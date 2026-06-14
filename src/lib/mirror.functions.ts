@@ -35,7 +35,7 @@ export const mirrorToExternalSupabase = createServerFn({ method: "POST" })
 
     for (const table of TABLES) {
       try {
-        const { data, error } = await supabaseAdmin.from(table).select("*");
+        const { data, error } = await (supabaseAdmin as any).from(table).select("*");
         if (error) throw error;
         const rows = data ?? [];
         if (rows.length === 0) {
