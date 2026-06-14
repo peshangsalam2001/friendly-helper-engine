@@ -11,9 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "فێرگە — پلاتفۆڕمی کۆرسی ئۆنلاین" },
-      { name: "description", content: "فێرگەی ئۆنلاین بە زمانی کوردی. کۆرسی ڤیدیۆیی کڕە و فێربە." },
-      { property: "og:title", content: "فێرگە — پلاتفۆڕمی کۆرسی ئۆنلاین" },
+      { title: "ئەکادیمیای پێشەنگ — Peshang Academy" },
+      { name: "description", content: "ئەکادیمیای پێشەنگ — کۆرسی ڤیدیۆیی بە زمانی کوردی. کۆرس بکڕە و فێربە." },
+      { property: "og:title", content: "ئەکادیمیای پێشەنگ — Peshang Academy" },
       { property: "og:description", content: "کۆرسی ڤیدیۆیی بە زمانی کوردی." },
     ],
   }),
@@ -44,7 +44,7 @@ function Index() {
             <div className="space-y-6">
               <div className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1 text-xs font-medium">
                 <GraduationCap className="h-3.5 w-3.5 text-primary" />
-                فێرگەی ئۆنلاین بە زمانی کوردی
+                ئەکادیمیای پێشەنگ — کۆرسی ئۆنلاین بە زمانی کوردی
               </div>
               <h1 className="text-4xl font-extrabold leading-tight md:text-5xl">
                 فێربە، بەرەوپێش بچۆ —<br />
@@ -59,12 +59,11 @@ function Index() {
                 <Link to="/guide"><Button size="lg" variant="outline">چۆن کاردەکات؟</Button></Link>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               {[
                 { icon: PlayCircle, t: "ڤیدیۆ بەرز", d: "وانە بە کوالیتی بەرز" },
                 { icon: Wallet, t: "باڵانس", d: "زیادکردن بە ئاسانی" },
                 { icon: ShieldCheck, t: "پارێزراو", d: "پارەکانت لە پارێزراویدا" },
-                { icon: GraduationCap, t: "سەرتیفیکات", d: "بەڵگەی تەواوکردن" },
               ].map((f) => (
                 <Card key={f.t} className="border-primary/10">
                   <CardContent className="space-y-2 p-5">

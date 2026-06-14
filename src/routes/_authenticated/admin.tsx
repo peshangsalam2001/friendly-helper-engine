@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Trash2, ExternalLink, Check, X } from "lucide-react";
+import { Plus, Trash2, ExternalLink, Check, X, Pencil, Upload } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   beforeLoad: async () => {
@@ -113,7 +113,9 @@ function TopupsTab() {
 function CoursesTab() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ title: "", description: "", price: "", thumbnail_url: "" });
+  const [editing, setEditing] = useState<any | null>(null);
+  const empty = { title: "", description: "", price: "", thumbnail_url: "", teacher: "", is_published: true };
+  const [form, setForm] = useState<any>(empty);
 
   const { data: courses } = useQuery({
     queryKey: ["admin-courses"],
@@ -126,16 +128,25 @@ function CoursesTab() {
 
   const create = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("courses").insert({
+      const payload = {
         title: form.title, description: form.description,
-        price: Number(form.price) || 0, thumbnail_url: form.thumbnail_url || null,
-      });
-      if (error) throw error;
+        price: Number(form.price) || 0,
+        thumbnail_url: form.thumbnail_url || null,
+        teacher: form.teacher || null,
+        is_published: !!form.is_published,
+      };
+      if (editing) {
+        const { error } = await supabase.from("courses").update(payload).eq("id", editing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("courses").insert(payload);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-courses"] });
-      setOpen(false); setForm({ title:"", description:"", price:"", thumbnail_url:"" });
-      toast.success("کۆرس زیادکرا");
+      setOpen(false); setEditing(null); setForm(empty);
+      toast.success("پاشەکەوت کرا");
     },
     onError: (e:any) => toast.error(e.message),
   });
@@ -152,15 +163,26 @@ function CoursesTab() {
     <>
       <div className="mb-4 flex justify-end">
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button><Plus className="ml-1 h-4 w-4" /> کۆرسی نوێ</Button></DialogTrigger>
+          <DialogTrigger asChild>
+            <Button onClick={() => { setEditing(null); setForm(empty); }}>
+              <Plus className="ml-1 h-4 w-4" /> کۆرسی نوێ
+            </Button>
+          </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>زیادکردنی کۆرس</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>{editing ? "دەستکاری کۆرس" : "زیادکردنی کۆرس"}</DialogTitle></DialogHeader>
             <form onSubmit={(e)=>{e.preventDefault(); create.mutate();}} className="space-y-3">
               <div><Label>ناونیشان</Label><Input required value={form.title} onChange={e=>setForm({...form,title:e.target.value})} /></div>
               <div><Label>وەسف</Label><Textarea value={form.description} onChange={e=>setForm({...form,description:e.target.value})} rows={4} /></div>
+              <div><Label>مامۆستا</Label><Input value={form.teacher} onChange={e=>setForm({...form,teacher:e.target.value})} placeholder="ناوی مامۆستا" /></div>
               <div><Label>نرخ (د.ع)</Label><Input type="number" required value={form.price} onChange={e=>setForm({...form,price:e.target.value})} /></div>
-              <div><Label>بەستەری وێنە (ئیختیاری)</Label><Input value={form.thumbnail_url} onChange={e=>setForm({...form,thumbnail_url:e.target.value})} placeholder="https://..." /></div>
-              <Button className="w-full" disabled={create.isPending}>زیادکردن</Button>
+              <div>
+                <Label>وێنە (ئیختیاری)</Label>
+                <Input value={form.thumbnail_url} onChange={e=>setForm({...form,thumbnail_url:e.target.value})} placeholder="https://... یاخود وێنە بەرز بکەرەوە" />
+                <ImageUploader onUploaded={(url)=>setForm({...form,thumbnail_url:url})} />
+                {form.thumbnail_url && <img src={form.thumbnail_url} alt="" className="mt-2 h-24 rounded-md object-cover" />}
+              </div>
+              <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.is_published} onChange={e=>setForm({...form,is_published:e.target.checked})} /> بڵاوکراوەتەوە</label>
+              <Button className="w-full" disabled={create.isPending}>{editing ? "پاشەکەوت" : "زیادکردن"}</Button>
             </form>
           </DialogContent>
         </Dialog>
@@ -173,12 +195,17 @@ function CoursesTab() {
             {courses.map(c => (
               <li key={c.id} className="flex items-center justify-between p-4">
                 <div>
-                  <div className="font-semibold">{c.title}</div>
-                  <div className="text-xs text-muted-foreground">{Number(c.price).toLocaleString()} د.ع</div>
+                  <div className="font-semibold">{c.title} {!c.is_published && <span className="ml-2 rounded bg-muted px-2 py-0.5 text-xs">شاراوە</span>}</div>
+                  <div className="text-xs text-muted-foreground">{Number(c.price).toLocaleString()} د.ع {c.teacher && `• ${c.teacher}`}</div>
                 </div>
-                <Button size="icon" variant="ghost" onClick={()=>del.mutate(c.id)}>
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
+                <div className="flex gap-1">
+                  <Button size="icon" variant="ghost" onClick={()=>{ setEditing(c); setForm({ title:c.title, description:c.description||"", price:String(c.price), thumbnail_url:c.thumbnail_url||"", teacher:c.teacher||"", is_published:c.is_published }); setOpen(true); }}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button size="icon" variant="ghost" onClick={()=>{ if(confirm("دڵنیایت؟")) del.mutate(c.id); }}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
               </li>
             ))}
           </ul>
@@ -191,7 +218,9 @@ function CoursesTab() {
 function LessonsTab() {
   const qc = useQueryClient();
   const [courseId, setCourseId] = useState<string>("");
-  const [form, setForm] = useState({ title:"", video_url:"", order_index:"0", is_preview:false });
+  const emptyL = { id:"", title:"", description:"", video_url:"", order_index:"0", is_preview:false, duration_seconds:"0" };
+  const [form, setForm] = useState<any>(emptyL);
+  const editingL = !!form.id;
 
   const { data: courses } = useQuery({
     queryKey: ["admin-courses-list"],
@@ -210,16 +239,26 @@ function LessonsTab() {
 
   const create = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("lessons").insert({
-        course_id: courseId, title: form.title, video_url: form.video_url || null,
-        order_index: Number(form.order_index)||0, is_preview: form.is_preview,
-      });
-      if (error) throw error;
+      const payload: any = {
+        course_id: courseId, title: form.title,
+        description: form.description || null,
+        video_url: form.video_url || null,
+        duration_seconds: Number(form.duration_seconds) || 0,
+        order_index: Number(form.order_index)||0,
+        is_preview: form.is_preview,
+      };
+      if (editingL) {
+        const { error } = await supabase.from("lessons").update(payload).eq("id", form.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from("lessons").insert(payload);
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-lessons"] });
-      setForm({ title:"", video_url:"", order_index: String((lessons?.length ?? 0) + 1), is_preview:false });
-      toast.success("وانە زیادکرا");
+      setForm({ ...emptyL, order_index: String((lessons?.length ?? 0) + 1) });
+      toast.success("پاشەکەوت کرا");
     },
     onError: (e:any) => toast.error(e.message),
   });
@@ -245,13 +284,16 @@ function LessonsTab() {
       {courseId && (
         <>
           <Card><CardContent className="p-5">
-            <h3 className="mb-3 font-bold">زیادکردنی وانە</h3>
+            <h3 className="mb-3 font-bold">{editingL ? "دەستکاری وانە" : "زیادکردنی وانە"}</h3>
             <form onSubmit={(e)=>{e.preventDefault(); create.mutate();}} className="grid gap-3 sm:grid-cols-2">
               <div className="sm:col-span-2"><Label>ناونیشان</Label><Input required value={form.title} onChange={e=>setForm({...form,title:e.target.value})} /></div>
-              <div className="sm:col-span-2"><Label>بەستەری ڤیدیۆ</Label><Input value={form.video_url} onChange={e=>setForm({...form,video_url:e.target.value})} placeholder="https://..." /></div>
+              <div className="sm:col-span-2"><Label>وەسف</Label><Textarea value={form.description} onChange={e=>setForm({...form,description:e.target.value})} rows={2} /></div>
+              <div className="sm:col-span-2"><Label>بەستەری ڤیدیۆ (Google Drive یاخود ...)</Label><Input value={form.video_url} onChange={e=>setForm({...form,video_url:e.target.value})} placeholder="https://drive.google.com/..." /></div>
+              <div><Label>درێژی بە چرکە</Label><Input type="number" value={form.duration_seconds} onChange={e=>setForm({...form,duration_seconds:e.target.value})} /></div>
               <div><Label>ڕیزبەندی</Label><Input type="number" value={form.order_index} onChange={e=>setForm({...form,order_index:e.target.value})} /></div>
-              <label className="flex items-end gap-2"><input type="checkbox" checked={form.is_preview} onChange={e=>setForm({...form,is_preview:e.target.checked})} /> نموونەی بێبەرامبەر</label>
-              <Button className="sm:col-span-2" disabled={create.isPending}>زیادکردن</Button>
+              <label className="flex items-end gap-2 sm:col-span-2"><input type="checkbox" checked={form.is_preview} onChange={e=>setForm({...form,is_preview:e.target.checked})} /> نموونەی بێبەرامبەر</label>
+              <Button className="sm:col-span-2" disabled={create.isPending}>{editingL ? "پاشەکەوت" : "زیادکردن"}</Button>
+              {editingL && <Button type="button" variant="outline" className="sm:col-span-2" onClick={()=>setForm(emptyL)}>پاشگەزبوونەوە</Button>}
             </form>
           </CardContent></Card>
 
@@ -262,8 +304,17 @@ function LessonsTab() {
               <ul className="divide-y">
                 {lessons.map((l, i) => (
                   <li key={l.id} className="flex items-center justify-between p-4">
-                    <div><span className="font-bold">{i+1}.</span> {l.title} {l.is_preview && <span className="rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">نموونە</span>}</div>
-                    <Button size="icon" variant="ghost" onClick={()=>del.mutate(l.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    <div>
+                      <span className="font-bold">{i+1}.</span> {l.title}
+                      {l.is_preview && <span className="mx-2 rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">نموونە</span>}
+                      {l.duration_seconds ? <span className="text-xs text-muted-foreground">• {Math.round(l.duration_seconds/60)} خ</span> : null}
+                    </div>
+                    <div className="flex gap-1">
+                      <Button size="icon" variant="ghost" onClick={()=>setForm({ id:l.id, title:l.title, description:l.description||"", video_url:"", order_index:String(l.order_index), is_preview:l.is_preview, duration_seconds:String(l.duration_seconds||0) })}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={()=>{ if(confirm("دڵنیایت؟")) del.mutate(l.id); }}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -272,5 +323,35 @@ function LessonsTab() {
         </>
       )}
     </div>
+  );
+}
+
+function ImageUploader({ onUploaded }: { onUploaded: (url: string) => void }) {
+  const [busy, setBusy] = useState(false);
+  async function handle(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBusy(true);
+    try {
+      const path = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      const { error } = await supabase.storage.from("course-images").upload(path, file, { upsert: false });
+      if (error) throw error;
+      // 1 year signed URL
+      const { data, error: sErr } = await supabase.storage.from("course-images").createSignedUrl(path, 60 * 60 * 24 * 365);
+      if (sErr) throw sErr;
+      onUploaded(data.signedUrl);
+      toast.success("وێنە بارکرا");
+    } catch (err: any) {
+      toast.error(err.message || "هەڵە لە بارکردن");
+    } finally {
+      setBusy(false);
+      e.target.value = "";
+    }
+  }
+  return (
+    <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-md border bg-background px-3 py-1.5 text-sm hover:bg-muted">
+      <Upload className="h-4 w-4" /> {busy ? "بارکردن..." : "بارکردنی وێنە"}
+      <input type="file" accept="image/*" className="hidden" onChange={handle} disabled={busy} />
+    </label>
   );
 }
