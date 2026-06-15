@@ -106,8 +106,7 @@ function Messages() {
                 className={`flex w-full items-center gap-3 border-b px-4 py-3 text-right transition hover:bg-muted ${activeId === c.id ? "bg-muted" : ""}`}
               >
                 <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
-                  {c.type === "support" ? <LifeBuoy className="h-4 w-4" /> :
-                   c.type === "announcement" ? <Megaphone className="h-4 w-4" /> :
+                  {c.type === "announcement" ? <Megaphone className="h-4 w-4" /> :
                    c.type === "course_group" ? <Users className="h-4 w-4" /> :
                    <MessageCircle className="h-4 w-4" />}
                 </div>
@@ -143,7 +142,7 @@ function ChatPanel({ conversationId, title, isAnnouncement }: { conversationId: 
       const { data, error } = await sb.from("chat_messages")
         .select("*").eq("conversation_id", conversationId).order("created_at", { ascending: true });
       if (error) throw error;
-      return data as { id: string; sender_id: string; body: string; created_at: string }[];
+      return data as { id: string; sender_id: string; body: string | null; created_at: string; attachments: Attachment[] }[];
     },
   });
 
@@ -167,15 +166,38 @@ function ChatPanel({ conversationId, title, isAnnouncement }: { conversationId: 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const send = useMutation({
-    mutationFn: async (body: string) => {
-      const { error } = await sb.from("chat_messages").insert({ conversation_id: conversationId, sender_id: user!.id, body });
+    mutationFn: async ({ body, attachments }: { body: string; attachments: Attachment[] }) => {
+      const { error } = await sb.from("chat_messages").insert({ conversation_id: conversationId, sender_id: user!.id, body: body || null, attachments });
       if (error) throw error;
     },
-    onSuccess: () => { setText(""); qc.invalidateQueries({ queryKey: ["chat", conversationId] }); },
+    onSuccess: () => { setText(""); setPending([]); qc.invalidateQueries({ queryKey: ["chat", conversationId] }); },
     onError: (e: any) => toast.error(e.message),
   });
 
   const canSend = !isAnnouncement || isAdmin;
+  const [pending, setPending] = useState<Attachment[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  async function handleFiles(files: FileList | null) {
+    if (!files?.length) return;
+    setUploading(true);
+    try {
+      const uploaded: Attachment[] = [];
+      for (const f of Array.from(files)) {
+        if (f.size > 50 * 1024 * 1024) { toast.error(`${f.name}: زۆر گەورەیە (50MB)`); continue; }
+        const path = `${conversationId}/${crypto.randomUUID()}-${f.name.replace(/[^\w.\-]/g, "_")}`;
+        const { error } = await supabase.storage.from("chat-attachments").upload(path, f, { contentType: f.type });
+        if (error) { toast.error(error.message); continue; }
+        const { data: signed } = await supabase.storage.from("chat-attachments").createSignedUrl(path, 60 * 60 * 24 * 365);
+        uploaded.push({ url: signed?.signedUrl || "", path, name: f.name, type: f.type, size: f.size });
+      }
+      setPending(p => [...p, ...uploaded]);
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
 
   return (
     <>
@@ -190,7 +212,12 @@ function ChatPanel({ conversationId, title, isAnnouncement }: { conversationId: 
             <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[75%] rounded-2xl px-4 py-2 ${mine ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
                 {!mine && <div className="mb-1 text-xs font-semibold opacity-70">{senderName}</div>}
-                <div className="whitespace-pre-wrap text-sm">{m.body}</div>
+                {m.body && <div className="whitespace-pre-wrap text-sm">{m.body}</div>}
+                {m.attachments?.length > 0 && (
+                  <div className="mt-2 space-y-2">
+                    {m.attachments.map((a, i) => <AttachmentView key={i} a={a} />)}
+                  </div>
+                )}
                 <div className="mt-1 text-[10px] opacity-60">{new Date(m.created_at).toLocaleTimeString()}</div>
               </div>
             </div>
@@ -200,11 +227,25 @@ function ChatPanel({ conversationId, title, isAnnouncement }: { conversationId: 
       </div>
       {canSend ? (
         <form
-          onSubmit={e => { e.preventDefault(); if (text.trim()) send.mutate(text.trim()); }}
-          className="flex gap-2 border-t p-3"
+          onSubmit={e => { e.preventDefault(); if (text.trim() || pending.length) send.mutate({ body: text.trim(), attachments: pending }); }}
+          className="border-t p-3"
         >
-          <Input value={text} onChange={e => setText(e.target.value)} placeholder="نووسە..." />
-          <Button type="submit" size="icon" disabled={!text.trim() || send.isPending}><Send className="h-4 w-4" /></Button>
+          {pending.length > 0 && (
+            <div className="mb-2 flex flex-wrap gap-2">
+              {pending.map((a, i) => (
+                <div key={i} className="flex items-center gap-2 rounded bg-muted px-2 py-1 text-xs">
+                  <Paperclip className="h-3 w-3" /> <span className="max-w-32 truncate">{a.name}</span>
+                  <button type="button" onClick={() => setPending(p => p.filter((_, j) => j !== i))}><X className="h-3 w-3" /></button>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="flex gap-2">
+            <input ref={fileRef} type="file" hidden multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip" onChange={e => handleFiles(e.target.files)} />
+            <Button type="button" size="icon" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading}><Paperclip className="h-4 w-4" /></Button>
+            <Input value={text} onChange={e => setText(e.target.value)} placeholder="نووسە..." />
+            <Button type="submit" size="icon" disabled={(!text.trim() && !pending.length) || send.isPending || uploading}><Send className="h-4 w-4" /></Button>
+          </div>
         </form>
       ) : (
         <div className="border-t p-3 text-center text-xs text-muted-foreground">تەنها ئەدمین دەتوانێت ڕاگەیاندن بنووسێت</div>
@@ -213,59 +254,76 @@ function ChatPanel({ conversationId, title, isAnnouncement }: { conversationId: 
   );
 }
 
-function NewDmButton() {
-  const { user } = useAuth();
+function AttachmentView({ a }: { a: Attachment }) {
+  const isImg = a.type?.startsWith("image/");
+  const isVid = a.type?.startsWith("video/");
+  const isAud = a.type?.startsWith("audio/");
+  if (isImg) return <a href={a.url} target="_blank" rel="noreferrer"><img src={a.url} alt={a.name} className="max-h-64 rounded" /></a>;
+  if (isVid) return <video src={a.url} controls className="max-h-64 rounded" />;
+  if (isAud) return <audio src={a.url} controls />;
+  return (
+    <a href={a.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 rounded bg-background/20 px-2 py-1 text-xs underline">
+      <Paperclip className="h-3 w-3" /> {a.name}
+    </a>
+  );
+}
+
+function UserSearchButton() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
-  const { data: profiles } = useQuery({
-    queryKey: ["public_profiles_picker"],
-    enabled: open,
+  const { data: results, isFetching } = useQuery({
+    queryKey: ["user_search", q],
+    enabled: open && q.trim().length >= 2,
     queryFn: async () => {
-      const { data, error } = await sb.from("public_profiles").select("id, full_name").limit(200);
+      const { data, error } = await sb.rpc("search_users", { _q: q.trim() });
       if (error) throw error;
-      return (data as { id: string; full_name: string | null }[]).filter(p => p.id !== user?.id);
+      return data as { id: string; username: string | null; full_name: string | null; phone: string | null; is_admin: boolean }[];
     },
   });
-  const filtered = useMemo(() => (profiles || []).filter(p => (p.full_name || "").toLowerCase().includes(q.toLowerCase())), [profiles, q]);
 
   async function start(otherId: string) {
-    const { error } = await sb.rpc("start_dm", { _other: otherId });
+    const { data, error } = await sb.rpc("start_dm", { _other: otherId });
     if (error) return toast.error(error.message);
     qc.invalidateQueries({ queryKey: ["conversations"] });
-    setOpen(false);
+    setOpen(false); setQ("");
+    toast.success("گفتوگۆ کرایەوە");
+    return data;
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2"><Plus className="h-4 w-4" /> گفتوگۆ</Button>
+        <Button variant="outline" size="sm" className="gap-2"><Search className="h-4 w-4" /> گەڕان بۆ بەکارهێنەر</Button>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle>دەستپێکی گفتوگۆ</DialogTitle></DialogHeader>
-        <Input placeholder="گەڕان بە ناو..." value={q} onChange={e => setQ(e.target.value)} />
-        <div className="max-h-80 overflow-y-auto">
-          {filtered.map(p => (
-            <button key={p.id} onClick={() => start(p.id)} className="block w-full rounded px-3 py-2 text-right hover:bg-muted">
-              {p.full_name || "بەکارهێنەر"}
+        <DialogHeader><DialogTitle>گەڕان بە یوزەرنەیم یان ژمارەی مۆبایل</DialogTitle></DialogHeader>
+        <Input placeholder="یوزەرنەیم یان ژمارە..." value={q} onChange={e => setQ(e.target.value)} autoFocus />
+        <div className="max-h-96 overflow-y-auto">
+          {q.trim().length < 2 ? (
+            <p className="p-4 text-center text-sm text-muted-foreground">لانیکەم ٢ پیت بنووسە</p>
+          ) : isFetching ? (
+            <p className="p-4 text-center text-sm text-muted-foreground">گەڕان...</p>
+          ) : !results?.length ? (
+            <p className="p-4 text-center text-sm text-muted-foreground">هیچ بەکارهێنەرێک نەدۆزرایەوە</p>
+          ) : results.map(u => (
+            <button key={u.id} onClick={() => start(u.id)} className="flex w-full items-center justify-between gap-3 rounded px-3 py-2 text-right hover:bg-muted">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  {u.username || u.full_name || "بەکارهێنەر"}
+                  <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] ${u.is_admin ? "bg-primary/15 text-primary" : "bg-muted-foreground/15 text-muted-foreground"}`}>
+                    {u.is_admin ? <><ShieldCheck className="h-3 w-3" /> ئەدمین</> : <><UserIcon className="h-3 w-3" /> بەکارهێنەری ئاسایی</>}
+                  </span>
+                </div>
+                <div className="text-xs text-muted-foreground">{u.full_name}{u.phone ? ` • ${u.phone}` : ""}</div>
+              </div>
+              <MessageCircle className="h-4 w-4 text-muted-foreground" />
             </button>
           ))}
-          {!filtered.length && <p className="p-4 text-center text-sm text-muted-foreground">هیچ بەکارهێنەرێک نەدۆزرایەوە</p>}
         </div>
       </DialogContent>
     </Dialog>
   );
-}
-
-function SupportButton() {
-  const qc = useQueryClient();
-  async function open() {
-    const { error } = await sb.rpc("start_support_chat");
-    if (error) return toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["conversations"] });
-    toast.success("گفتوگۆی پشتگیری کرایەوە");
-  }
-  return <Button variant="outline" size="sm" className="gap-2" onClick={open}><LifeBuoy className="h-4 w-4" /> پشتگیری</Button>;
 }
 
 function AnnounceButton() {
