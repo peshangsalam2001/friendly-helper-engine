@@ -16,21 +16,24 @@ export type Database = {
     Tables: {
       chat_messages: {
         Row: {
-          body: string
+          attachments: Json
+          body: string | null
           conversation_id: string
           created_at: string
           id: string
           sender_id: string
         }
         Insert: {
-          body: string
+          attachments?: Json
+          body?: string | null
           conversation_id: string
           created_at?: string
           id?: string
           sender_id: string
         }
         Update: {
-          body?: string
+          attachments?: Json
+          body?: string | null
           conversation_id?: string
           created_at?: string
           id?: string
@@ -461,6 +464,7 @@ export type Database = {
         Returns: number
       }
       get_lesson_video: { Args: { _lesson_id: string }; Returns: string }
+      get_user_role: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -516,6 +520,16 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      search_users: {
+        Args: { _q: string }
+        Returns: {
+          full_name: string
+          id: string
+          is_admin: boolean
+          phone: string
+          username: string
+        }[]
       }
       set_lesson_video: {
         Args: { _lesson_id: string; _video_url: string }
