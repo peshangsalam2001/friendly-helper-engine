@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useIsAdmin } from "@/lib/auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Send, Plus, LifeBuoy, Megaphone, Users, MessageCircle } from "lucide-react";
+import { Send, Search, Megaphone, Users, MessageCircle, Paperclip, X, ShieldCheck, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/messages")({ component: Messages });
@@ -21,6 +21,8 @@ type Conversation = {
 };
 
 const sb = supabase as any;
+
+type Attachment = { url: string; path: string; name: string; type: string; size: number };
 
 function Messages() {
   const { user } = useAuth();
@@ -87,8 +89,7 @@ function Messages() {
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">نامەکان</h1>
         <div className="flex gap-2">
-          <NewDmButton />
-          <SupportButton />
+          <UserSearchButton />
           {isAdmin && <AnnounceButton />}
         </div>
       </div>
