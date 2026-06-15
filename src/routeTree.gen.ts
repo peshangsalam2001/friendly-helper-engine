@@ -9,7 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VerifyOtpRouteImport } from './routes/verify-otp'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as GuideRouteImport } from './routes/guide'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as CoursesRouteImport } from './routes/courses'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -21,9 +24,24 @@ import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 
+const VerifyOtpRoute = VerifyOtpRouteImport.update({
+  id: '/verify-otp',
+  path: '/verify-otp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GuideRoute = GuideRouteImport.update({
   id: '/guide',
   path: '/guide',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoursesRoute = CoursesRouteImport.update({
@@ -80,7 +98,10 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/courses': typeof CoursesRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
   '/guide': typeof GuideRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/verify-otp': typeof VerifyOtpRoute
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/messages': typeof AuthenticatedMessagesRoute
@@ -91,7 +112,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/guide': typeof GuideRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/verify-otp': typeof VerifyOtpRoute
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/messages': typeof AuthenticatedMessagesRoute
@@ -105,7 +129,10 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/courses': typeof CoursesRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
   '/guide': typeof GuideRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/verify-otp': typeof VerifyOtpRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
@@ -119,7 +146,10 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/courses'
+    | '/forgot-password'
     | '/guide'
+    | '/reset-password'
+    | '/verify-otp'
     | '/account'
     | '/admin'
     | '/messages'
@@ -130,7 +160,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/forgot-password'
     | '/guide'
+    | '/reset-password'
+    | '/verify-otp'
     | '/account'
     | '/admin'
     | '/messages'
@@ -143,7 +176,10 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/courses'
+    | '/forgot-password'
     | '/guide'
+    | '/reset-password'
+    | '/verify-otp'
     | '/_authenticated/account'
     | '/_authenticated/admin'
     | '/_authenticated/messages'
@@ -157,16 +193,40 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   CoursesRoute: typeof CoursesRouteWithChildren
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   GuideRoute: typeof GuideRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  VerifyOtpRoute: typeof VerifyOtpRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/verify-otp': {
+      id: '/verify-otp'
+      path: '/verify-otp'
+      fullPath: '/verify-otp'
+      preLoaderRoute: typeof VerifyOtpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/guide': {
       id: '/guide'
       path: '/guide'
       fullPath: '/guide'
       preLoaderRoute: typeof GuideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/courses': {
@@ -277,7 +337,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   CoursesRoute: CoursesRouteWithChildren,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   GuideRoute: GuideRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
+  VerifyOtpRoute: VerifyOtpRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
