@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useQueryClient } from "@tanstack/react-query";
 import { NotificationsBell } from "@/components/notifications-bell";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 function NavLinks({ onClick }: { onClick?: () => void }) {
   const { user } = useAuth();
@@ -55,6 +56,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
+          <ThemeToggle />
           {user ? (
             <>
               <NotificationsBell />

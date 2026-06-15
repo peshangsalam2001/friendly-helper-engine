@@ -337,28 +337,40 @@ export type Database = {
       }
       profiles: {
         Row: {
+          age: number | null
           balance: number
           created_at: string
           full_name: string | null
           id: string
+          location: string | null
           phone: string | null
+          referral_source: string | null
           updated_at: string
+          username: string | null
         }
         Insert: {
+          age?: number | null
           balance?: number
           created_at?: string
           full_name?: string | null
           id: string
+          location?: string | null
           phone?: string | null
+          referral_source?: string | null
           updated_at?: string
+          username?: string | null
         }
         Update: {
+          age?: number | null
           balance?: number
           created_at?: string
           full_name?: string | null
           id?: string
+          location?: string | null
           phone?: string | null
+          referral_source?: string | null
           updated_at?: string
+          username?: string | null
         }
         Relationships: []
       }
@@ -441,6 +453,7 @@ export type Database = {
       }
     }
     Functions: {
+      email_for_username: { Args: { _username: string }; Returns: string }
       get_announcement_conversation: { Args: never; Returns: string }
       get_course_buyer_count: { Args: { _course_id: string }; Returns: number }
       get_course_total_duration: {
@@ -461,6 +474,7 @@ export type Database = {
       }
       mark_all_notifications_read: { Args: never; Returns: undefined }
       mark_conversation_read: { Args: { _conv: string }; Returns: undefined }
+      phone_available: { Args: { _phone: string }; Returns: boolean }
       post_announcement: {
         Args: { _body: string; _title: string }
         Returns: string
@@ -509,6 +523,7 @@ export type Database = {
       }
       start_dm: { Args: { _other: string }; Returns: string }
       start_support_chat: { Args: never; Returns: string }
+      username_available: { Args: { _username: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
