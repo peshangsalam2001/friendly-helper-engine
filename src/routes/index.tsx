@@ -61,9 +61,9 @@ function Index() {
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               {[
-                { icon: PlayCircle, t: "ڤیدیۆ بەرز", d: "وانە بە کوالیتی بەرز" },
-                { icon: Wallet, t: "باڵانس", d: "زیادکردن بە ئاسانی" },
-                { icon: ShieldCheck, t: "پارێزراو", d: "پارەکانت لە پارێزراویدا" },
+                { icon: PlayCircle, t: "بەرزترین کوالیتی", d: "وانەکان بە بەرزترین کوالیتی دادەنرێن" },
+                { icon: Wallet, t: "باڵانس", d: "زیادکردنی باڵانس لەڕێگەی FIB ، Fastpay ، SuperQi" },
+                { icon: ShieldCheck, t: "پارێزراو", d: "گرەنتی پاراستنی هەژمارەکەت و پارەکانت دەکەین" },
               ].map((f) => (
                 <Card key={f.t} className="border-primary/10">
                   <CardContent className="space-y-2 p-5">
