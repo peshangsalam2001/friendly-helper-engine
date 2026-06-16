@@ -163,7 +163,8 @@ function CoursePage() {
                       src={peshangLogo.url}
                       alt=""
                       aria-hidden="true"
-                      className="pointer-events-none absolute right-2 top-2 h-9 w-9 rounded object-cover"
+                      onClick={(e) => e.preventDefault()}
+                      className="absolute right-2 top-2 h-9 w-9 cursor-default rounded object-cover"
                     />
                   )}
                 </>
