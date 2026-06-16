@@ -20,7 +20,7 @@ function CoursesList() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("courses")
-        .select("id, title, description, price, thumbnail_url, teacher, lessons(count), enrollments(count)")
+        .select("id, title, description, price, thumbnail_url, teacher, lessons(count)")
         .eq("is_published", true)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -44,7 +44,6 @@ function CoursesList() {
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {courses.map((c: any) => {
             const lessonCount = c.lessons?.[0]?.count ?? 0;
-            const studentCount = c.enrollments?.[0]?.count ?? 0;
             return (
             <Link key={c.id} to="/courses/$courseId" params={{ courseId: c.id }}>
               <Card className="h-full overflow-hidden transition hover:border-primary hover:shadow-lg">
@@ -57,7 +56,7 @@ function CoursesList() {
                   <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                     {c.teacher && <span className="flex items-center gap-1"><User className="h-3.5 w-3.5" /> {c.teacher}</span>}
                     <span className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5" /> {lessonCount} وانە</span>
-                    <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {studentCount.toLocaleString()} قوتابی</span>
+                    <BuyerCount courseId={c.id} />
                   </div>
                   <div className="font-bold text-primary">{Number(c.price).toLocaleString()} د.ع</div>
                 </CardContent>
@@ -68,5 +67,19 @@ function CoursesList() {
         </div>
       )}
     </div>
+  );
+}
+
+function BuyerCount({ courseId }: { courseId: string }) {
+  const { data } = useQuery({
+    queryKey: ["buyer-count", courseId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_course_buyer_count", { _course_id: courseId });
+      if (error) throw error;
+      return data as number;
+    },
+  });
+  return (
+    <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" /> {(data ?? 0).toLocaleString()} قوتابی</span>
   );
 }
