@@ -73,7 +73,7 @@ function Messages() {
     return () => { supabase.removeChannel(ch); };
   }, [qc]);
 
-  function nameFor(c: Conversation, prefer: "full_name" | "username" = "full_name"): string {
+  function nameFor(c: Conversation, prefer: "full_name" | "username" = "username"): string {
     if (c.type === "dm" && parts && profiles && user) {
       const others = parts.filter(p => p.conversation_id === c.id && p.user_id !== user.id);
       const other = others[0];
@@ -121,7 +121,7 @@ function Messages() {
         </Card>
 
         <Card className="flex h-full flex-col overflow-hidden">
-          {activeId ? <ChatPanel conversationId={activeId} title={nameFor(convs!.find(c => c.id === activeId)!, "username")} isAnnouncement={convs?.find(c => c.id === activeId)?.type === "announcement"} /> : (
+          {activeId ? <ChatPanel conversationId={activeId} title={nameFor(convs!.find(c => c.id === activeId)!, "full_name")} isAnnouncement={convs?.find(c => c.id === activeId)?.type === "announcement"} /> : (
             <div className="grid flex-1 place-items-center text-muted-foreground">گفتوگۆیەک هەڵبژێرە</div>
           )}
         </Card>
