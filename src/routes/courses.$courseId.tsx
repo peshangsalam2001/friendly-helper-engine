@@ -164,7 +164,7 @@ function CoursePage() {
                       alt=""
                       aria-hidden="true"
                       onClick={(e) => e.preventDefault()}
-                      className="absolute right-2 top-2 h-9 w-9 cursor-default rounded object-cover"
+                      className="absolute right-0 top-0 h-14 w-14 cursor-default object-cover"
                     />
                   )}
                 </>
