@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, BookOpen, User } from "lucide-react";
+import { Users, BookOpen, User, CheckCircle2 } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/courses/")({
   head: () => ({
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/courses/")({
 });
 
 function CoursesList() {
+  const { user } = useAuth();
   const { data: courses, isLoading } = useQuery({
     queryKey: ["courses"],
     queryFn: async () => {
@@ -25,6 +27,19 @@ function CoursesList() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
+    },
+  });
+
+  const { data: myEnrollments } = useQuery({
+    queryKey: ["my-enrollments", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("enrollments")
+        .select("course_id")
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      return new Set((data ?? []).map((r: any) => r.course_id as string));
     },
   });
 
@@ -44,6 +59,7 @@ function CoursesList() {
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {courses.map((c: any) => {
             const lessonCount = c.lessons?.[0]?.count ?? 0;
+            const owned = myEnrollments?.has(c.id) ?? false;
             return (
             <Link key={c.id} to="/courses/$courseId" params={{ courseId: c.id }}>
               <Card className="h-full overflow-hidden transition hover:border-primary hover:shadow-lg">
@@ -58,7 +74,13 @@ function CoursesList() {
                     <span className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5" /> {lessonCount} وانە</span>
                     <BuyerCount courseId={c.id} />
                   </div>
-                  <div className="font-bold text-primary">5,000 د.ع</div>
+                  {owned ? (
+                    <div className="flex items-center gap-1.5 font-bold text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle2 className="h-4 w-4" /> کڕاوە
+                    </div>
+                  ) : (
+                    <div className="font-bold text-primary">5,000 د.ع</div>
+                  )}
                 </CardContent>
               </Card>
             </Link>
