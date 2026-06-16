@@ -224,7 +224,6 @@ function CoursePage() {
                       <span>{i + 1}. {l.title}</span>
                     </span>
                     <span className="flex items-center gap-2">
-                      {l.duration_seconds ? <span className="text-xs text-muted-foreground">{fmtTime(l.duration_seconds)}</span> : null}
                       {l.is_preview && !enrolled && <span className="rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">نموونە</span>}
                     </span>
                   </button>
