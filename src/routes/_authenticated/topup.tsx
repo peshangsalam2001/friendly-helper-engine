@@ -121,7 +121,7 @@ function Topup() {
               </label>
             </div>
             <div>
-              <Label>تێبینی (ئیختیاری)</Label>
+              <Label>تێبینی (ئارەزوومەندانە)</Label>
               <Textarea value={note} onChange={e=>setNote(e.target.value)} rows={3} />
             </div>
             <Button className="w-full" disabled={loading}>{loading?"چاوەڕێبە...":"ناردنی داواکاری"}</Button>
