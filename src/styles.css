@@ -147,3 +147,7 @@
     direction: rtl;
   }
 }
+
+#lovable-badge {
+  display: none !important;
+}
