@@ -186,7 +186,7 @@ function CoursePage() {
         <Card>
           <CardContent className="space-y-4 p-5">
             <div className="text-sm text-muted-foreground">نرخی کۆرس</div>
-            <div className="text-3xl font-bold text-primary">10,000 د.ع</div>
+            <div className="text-3xl font-bold text-primary">5,000 د.ع</div>
             {enrolled ? (
               <Button disabled className="w-full gap-2"><CheckCircle2 className="h-4 w-4" /> کڕاوە</Button>
             ) : !user ? (

@@ -102,7 +102,7 @@ function Index() {
                     <CardContent className="space-y-2 p-5">
                       <h3 className="line-clamp-1 font-bold">{c.title}</h3>
                       <p className="line-clamp-2 min-h-[2.5rem] text-sm text-muted-foreground">{c.description}</p>
-                      <div className="font-bold text-primary">10,000 د.ع</div>
+                      <div className="font-bold text-primary">5,000 د.ع</div>
                     </CardContent>
                   </Card>
                 </Link>

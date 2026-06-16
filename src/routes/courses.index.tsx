@@ -58,7 +58,7 @@ function CoursesList() {
                     <span className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5" /> {lessonCount} وانە</span>
                     <BuyerCount courseId={c.id} />
                   </div>
-                  <div className="font-bold text-primary">10,000 د.ع</div>
+                  <div className="font-bold text-primary">5,000 د.ع</div>
                 </CardContent>
               </Card>
             </Link>
