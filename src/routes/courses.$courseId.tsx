@@ -149,21 +149,13 @@ function CoursePage() {
               return v.kind === "video" ? (
                 <video key={current.id} controls className="h-full w-full" src={v.src} />
               ) : (
-                <>
-                  <iframe
-                    key={current.id}
-                    src={v.src}
-                    className="h-full w-full"
-                    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                    allowFullScreen
-                  />
-                  {v.src.includes("drive.google.com") && (
-                    <div
-                      className="absolute right-0 top-0 h-12 w-16 bg-black"
-                      aria-hidden="true"
-                    />
-                  )}
-                </>
+                <iframe
+                  key={current.id}
+                  src={v.src}
+                  className="h-full w-full"
+                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                  allowFullScreen
+                />
               );
             }
             return (
