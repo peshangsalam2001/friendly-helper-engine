@@ -54,7 +54,7 @@ function Messages() {
     queryKey: ["participants"],
     enabled: !!convs?.length,
     queryFn: async () => {
-      const { data, error } = await sb.from("conversation_participants").select("conversation_id, user_id");
+      const { data, error } = await sb.from("conversation_participants").select("conversation_id, user_id").order("user_id", { ascending: true });
       if (error) throw error;
       return data as { conversation_id: string; user_id: string }[];
     },
