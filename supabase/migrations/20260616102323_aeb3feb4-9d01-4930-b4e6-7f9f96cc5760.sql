@@ -1,0 +1,1 @@
+UPDATE public.lesson_videos SET video_url = 'https://drive.google.com/file/d/15PwPgTmnH6llibSFEXawsSDPTtM1i8qq/view?usp=sharing' WHERE lesson_id = '968f1279-1cbd-471e-acd7-124347a9183f';
