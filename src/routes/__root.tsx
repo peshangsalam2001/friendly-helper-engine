@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -13,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
+import { useAuth, useProfile } from "@/lib/auth";
 
 function NotFoundComponent() {
   return (
@@ -143,7 +145,22 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <OnboardingGate />
       <Toaster richColors position="top-center" />
     </QueryClientProvider>
   );
+}
+
+function OnboardingGate() {
+  const { user } = useAuth();
+  const { data: profile } = useProfile();
+  const router = useRouter();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  useEffect(() => {
+    if (!user || !profile) return;
+    if (!profile.username && pathname !== "/onboarding/username" && pathname !== "/auth") {
+      router.navigate({ to: "/onboarding/username" });
+    }
+  }, [user, profile, pathname, router]);
+  return null;
 }
