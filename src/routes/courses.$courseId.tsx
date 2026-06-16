@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Lock, PlayCircle, CheckCircle2, Users, User } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
+import peshangLogo from "@/assets/peshang-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/courses/$courseId")({
   component: CoursePage,
@@ -149,13 +150,24 @@ function CoursePage() {
               return v.kind === "video" ? (
                 <video key={current.id} controls className="h-full w-full" src={v.src} />
               ) : (
-                <iframe
-                  key={current.id}
-                  src={v.src}
-                  className="h-full w-full"
-                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                  allowFullScreen
-                />
+                <>
+                  <iframe
+                    key={current.id}
+                    src={v.src}
+                    className="h-full w-full"
+                    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                    allowFullScreen
+                  />
+                  {v.src.includes("drive.google.com") && (
+                    <img
+                      src={peshangLogo.url}
+                      alt=""
+                      aria-hidden="true"
+                      onClick={(e) => e.preventDefault()}
+                      className="absolute right-2 top-2 h-9 w-9 cursor-default rounded object-cover"
+                    />
+                  )}
+                </>
               );
             }
             return (
