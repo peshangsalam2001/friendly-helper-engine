@@ -73,14 +73,15 @@ function Messages() {
     return () => { supabase.removeChannel(ch); };
   }, [qc]);
 
-  function nameFor(c: Conversation): string {
-    if (c.title) return c.title;
+  function nameFor(c: Conversation, prefer: "full_name" | "username" = "full_name"): string {
     if (c.type === "dm" && parts && profiles && user) {
       const others = parts.filter(p => p.conversation_id === c.id && p.user_id !== user.id);
       const other = others[0];
       const p = profiles.find(p => p.id === other?.user_id);
-      return p?.username || p?.full_name || "نامەی تایبەت";
+      if (prefer === "username") return p?.username || p?.full_name || "نامەی تایبەت";
+      return p?.full_name || p?.username || "نامەی تایبەت";
     }
+    if (c.title) return c.title;
     return c.type === "support" ? "پشتگیری" : c.type === "course_group" ? "گرووپی کۆرس" : "ڕاگەیاندن";
   }
 
@@ -120,7 +121,7 @@ function Messages() {
         </Card>
 
         <Card className="flex h-full flex-col overflow-hidden">
-          {activeId ? <ChatPanel conversationId={activeId} title={nameFor(convs!.find(c => c.id === activeId)!)} isAnnouncement={convs?.find(c => c.id === activeId)?.type === "announcement"} /> : (
+          {activeId ? <ChatPanel conversationId={activeId} title={nameFor(convs!.find(c => c.id === activeId)!, "username")} isAnnouncement={convs?.find(c => c.id === activeId)?.type === "announcement"} /> : (
             <div className="grid flex-1 place-items-center text-muted-foreground">گفتوگۆیەک هەڵبژێرە</div>
           )}
         </Card>
