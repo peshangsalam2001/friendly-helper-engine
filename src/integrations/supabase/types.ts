@@ -443,14 +443,17 @@ export type Database = {
         Row: {
           full_name: string | null
           id: string | null
+          username: string | null
         }
         Insert: {
           full_name?: string | null
           id?: string | null
+          username?: string | null
         }
         Update: {
           full_name?: string | null
           id?: string | null
+          username?: string | null
         }
         Relationships: []
       }
