@@ -108,7 +108,12 @@ function CoursePage() {
     },
     onError: (e: any) => {
       const msg = e.message || "";
-      if (msg.includes("insufficient_balance")) toast.error("باڵانست بەس نییە. تکایە یەکەم باڵانس زیاد بکە.");
+      if (msg.includes("insufficient_balance")) toast.error(
+        <span>
+          باڵانسی پێویستت نیە. تکایە باڵانسەکەت پڕبکەرەوە{" "}
+          <Link to="/topup" className="font-bold text-primary underline">لێرە</Link>
+        </span>
+      );
       else if (msg.includes("already_enrolled")) toast.info("پێشتر ئەم کۆرسەت کڕیوە.");
       else toast.error("هەڵەیەک ڕوویدا. تکایە دووبارە هەوڵبدەرەوە.");
     },
