@@ -43,9 +43,9 @@ function Messages() {
   const { data: profiles } = useQuery({
     queryKey: ["public_profiles"],
     queryFn: async () => {
-      const { data, error } = await sb.from("public_profiles").select("id, full_name");
+      const { data, error } = await sb.from("public_profiles").select("id, full_name, username");
       if (error) throw error;
-      return data as { id: string; full_name: string | null }[];
+      return data as { id: string; full_name: string | null; username: string | null }[];
     },
   });
 
@@ -78,8 +78,8 @@ function Messages() {
     if (c.type === "dm" && parts && profiles && user) {
       const others = parts.filter(p => p.conversation_id === c.id && p.user_id !== user.id);
       const other = others[0];
-      const name = profiles.find(p => p.id === other?.user_id)?.full_name;
-      return name || "نامەی تایبەت";
+      const p = profiles.find(p => p.id === other?.user_id);
+      return p?.username || p?.full_name || "نامەی تایبەت";
     }
     return c.type === "support" ? "پشتگیری" : c.type === "course_group" ? "گرووپی کۆرس" : "ڕاگەیاندن";
   }
