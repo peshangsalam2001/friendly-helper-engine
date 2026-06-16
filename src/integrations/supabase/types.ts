@@ -379,6 +379,7 @@ export type Database = {
       }
       topup_requests: {
         Row: {
+          account_holder_name: string | null
           admin_note: string | null
           amount: number
           created_at: string
@@ -388,10 +389,12 @@ export type Database = {
           proof_url: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          sender_number: string | null
           status: Database["public"]["Enums"]["topup_status"]
           user_id: string
         }
         Insert: {
+          account_holder_name?: string | null
           admin_note?: string | null
           amount: number
           created_at?: string
@@ -401,10 +404,12 @@ export type Database = {
           proof_url?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          sender_number?: string | null
           status?: Database["public"]["Enums"]["topup_status"]
           user_id: string
         }
         Update: {
+          account_holder_name?: string | null
           admin_note?: string | null
           amount?: number
           created_at?: string
@@ -414,6 +419,7 @@ export type Database = {
           proof_url?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          sender_number?: string | null
           status?: Database["public"]["Enums"]["topup_status"]
           user_id?: string
         }
@@ -505,6 +511,7 @@ export type Database = {
       review_topup: {
         Args: { _admin_note?: string; _approve: boolean; _topup_id: string }
         Returns: {
+          account_holder_name: string | null
           admin_note: string | null
           amount: number
           created_at: string
@@ -514,6 +521,7 @@ export type Database = {
           proof_url: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          sender_number: string | null
           status: Database["public"]["Enums"]["topup_status"]
           user_id: string
         }

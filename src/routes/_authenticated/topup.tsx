@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -26,11 +26,22 @@ function Topup() {
   const [note, setNote] = useState("");
   const [file, setFile] = useState<File|null>(null);
   const [loading, setLoading] = useState(false);
+  const [accountHolder, setAccountHolder] = useState("");
+  const [senderNumber, setSenderNumber] = useState("");
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const formattedDate = `${pad(now.getDate())}-${pad(now.getMonth()+1)}-${now.getFullYear()} / ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const amt = Number(amount);
     if (!amt || amt < 1000) { toast.error("بڕێکی دروست بنووسە (لانیکەم ١٠٠٠ د.ع)"); return; }
+    if (!accountHolder.trim()) { toast.error("تکایە ناوی هەژمارەکەت بنووسە"); return; }
+    if (!senderNumber.trim()) { toast.error("تکایە ژمارەی هەژمارەکەت بنووسە"); return; }
     if (!file) { toast.error("تکایە وێنەی بەڵگەی پارەدان زیاد بکە"); return; }
     if (!ALLOWED_MIME.includes(file.type) || !ALLOWED_EXT.test(file.name)) {
       toast.error("تەنیا وێنە (JPG, PNG, WEBP, GIF) ڕێگەپێدراوە"); return;
@@ -46,6 +57,8 @@ function Topup() {
       if (upErr) throw upErr;
       const { error: insErr } = await supabase.from("topup_requests").insert({
         user_id: user!.id, amount: amt, method, proof_url: path, note,
+        account_holder_name: accountHolder.trim(),
+        sender_number: senderNumber.trim(),
       });
       if (insErr) throw insErr;
       toast.success("داواکاریەکەت بە سەرکەوتوویی تۆمارکرا. تکایە چاوەڕوانبە تاکو لەماوەی کەمتر لە ٢٤ کاتژمێر باڵانسەکە دەخرێتە سەر هەژمارەکەت");
@@ -75,6 +88,18 @@ function Topup() {
             <div>
               <Label>بڕی باڵانس (د.ع)</Label>
               <Input type="number" min={1000} step={1000} required value={amount} onChange={e=>setAmount(e.target.value)} placeholder="25000" />
+            </div>
+            <div>
+              <Label>ناوی هەژمارەکەت (FIB / Fastpay / SuperQi)</Label>
+              <Input required value={accountHolder} onChange={e=>setAccountHolder(e.target.value)} placeholder="ناوی تەواوی هەژمار" />
+            </div>
+            <div>
+              <Label>ژمارەی ئێف ئای بی یاخود فاستپەی یان سوپەرکی</Label>
+              <Input required value={senderNumber} onChange={e=>setSenderNumber(e.target.value)} placeholder="07XXXXXXXXX" inputMode="tel" />
+            </div>
+            <div>
+              <Label>بەرواری ناردن</Label>
+              <Input value={formattedDate} readOnly disabled />
             </div>
             <div>
               <Label className="mb-2 block">ڕێگای پارەدان</Label>
