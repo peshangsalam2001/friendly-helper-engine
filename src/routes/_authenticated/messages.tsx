@@ -98,10 +98,19 @@ function Messages() {
 
       <div className="grid h-[calc(100vh-220px)] min-h-[500px] gap-4 md:grid-cols-[280px_1fr]">
         <Card className="overflow-hidden">
-          <div className="h-full overflow-y-auto">
-            {!convs?.length ? (
-              <p className="p-6 text-center text-sm text-muted-foreground">هیچ گفتوگۆیەک نییە</p>
-            ) : convs.map(c => (
+          <div className="flex h-full flex-col">
+            <div className="border-b p-2">
+              <div className="relative">
+                <Search className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input value={listQuery} onChange={e => setListQuery(e.target.value)} placeholder="گەڕان لە لیست..." className="pr-8" />
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+            {(() => {
+              const q = listQuery.trim().toLowerCase();
+              const list = (convs || []).filter(c => !q || nameFor(c).toLowerCase().includes(q) || nameFor(c, "full_name").toLowerCase().includes(q));
+              if (!list.length) return <p className="p-6 text-center text-sm text-muted-foreground">هیچ گفتوگۆیەک نییە</p>;
+              return list.map(c => (
               <button
                 key={c.id}
                 onClick={() => setActiveId(c.id)}
@@ -117,7 +126,9 @@ function Messages() {
                   <div className="text-xs text-muted-foreground">{new Date(c.updated_at).toLocaleDateString()}</div>
                 </div>
               </button>
-            ))}
+              ));
+            })()}
+            </div>
           </div>
         </Card>
 
