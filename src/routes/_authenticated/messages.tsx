@@ -29,6 +29,7 @@ function Messages() {
   const { data: isAdmin } = useIsAdmin();
   const qc = useQueryClient();
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [listQuery, setListQuery] = useState("");
 
   const { data: convs } = useQuery({
     queryKey: ["conversations"],
