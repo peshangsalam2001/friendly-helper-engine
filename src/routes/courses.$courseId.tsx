@@ -36,6 +36,13 @@ function resolveVideo(url: string | null | undefined): { kind: "iframe" | "video
   return { kind: "iframe", src: u };
 }
 
+function resolveDownload(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const drive = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([a-zA-Z0-9_-]+)/);
+  if (drive) return `https://drive.google.com/uc?export=download&id=${drive[1]}`;
+  return url;
+}
+
 function CoursePage() {
   const { courseId } = Route.useParams();
   const { user } = useAuth();
@@ -163,7 +170,7 @@ function CoursePage() {
           {canPlay && videoUrl && (
             <div className="mt-3">
               <a
-                href={videoUrl}
+                href={resolveDownload(videoUrl) ?? videoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 download
