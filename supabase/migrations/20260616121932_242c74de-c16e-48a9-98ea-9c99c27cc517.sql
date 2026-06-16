@@ -1,0 +1,1 @@
+ALTER TABLE public.topup_requests ADD COLUMN IF NOT EXISTS account_holder_name text, ADD COLUMN IF NOT EXISTS sender_number text;
