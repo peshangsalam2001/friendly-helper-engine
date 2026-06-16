@@ -111,7 +111,7 @@ function CoursePage() {
       if (msg.includes("insufficient_balance")) toast.error(
         <span>
           باڵانسی پێویستت نیە. تکایە باڵانسەکەت پڕبکەرەوە{" "}
-          <Link to="/topup" className="font-bold text-primary underline">لێرە</Link>
+          <Link to="/topup" className="text-base font-extrabold text-sky-600 underline underline-offset-2 dark:text-sky-400">لێرە</Link>
         </span>
       );
       else if (msg.includes("already_enrolled")) toast.info("پێشتر ئەم کۆرسەت کڕیوە.");
