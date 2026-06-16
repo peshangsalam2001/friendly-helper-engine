@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Lock, PlayCircle, CheckCircle2, Users, Clock, User } from "lucide-react";
+import { Lock, PlayCircle, CheckCircle2, Users, User } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 
@@ -123,10 +123,12 @@ function CoursePage() {
   if (isLoading) return <div className="container mx-auto p-10">چاوەڕێبە...</div>;
   if (!course) return <div className="container mx-auto p-10">کۆرسەکە نەدۆزرایەوە</div>;
 
-  const totalSec = (lessons ?? []).reduce((s, l) => s + (l.duration_seconds || 0), 0);
-  const fmt = (s: number) => {
-    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
-    return h ? `${h} کاتژمێر ${m} خولەک` : `${m} خولەک`;
+  const fmtTime = (s: number) => {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = Math.floor(s % 60);
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    return h ? `${h}:${pad(m)}:${pad(sec)}` : `${m}:${pad(sec)}`;
   };
 
   return (
@@ -174,7 +176,6 @@ function CoursePage() {
           <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
             {course.teacher && <span className="flex items-center gap-1"><User className="h-4 w-4" /> مامۆستا: {course.teacher}</span>}
             <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {(buyerCount ?? 0).toLocaleString()} قوتابی</span>
-            {totalSec > 0 && <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> کۆی درێژی: {fmt(totalSec)}</span>}
             <span>{lessons?.length ?? 0} وانە</span>
           </div>
           <p className="mt-3 whitespace-pre-line text-muted-foreground">{course.description}</p>
@@ -223,7 +224,7 @@ function CoursePage() {
                       <span>{i + 1}. {l.title}</span>
                     </span>
                     <span className="flex items-center gap-2">
-                      {l.duration_seconds ? <span className="text-xs text-muted-foreground">{Math.round(l.duration_seconds/60)} خ</span> : null}
+                      {l.duration_seconds ? <span className="text-xs text-muted-foreground">{fmtTime(l.duration_seconds)}</span> : null}
                       {l.is_preview && !enrolled && <span className="rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">نموونە</span>}
                     </span>
                   </button>
