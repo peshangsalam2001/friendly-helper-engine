@@ -29,7 +29,7 @@ function OnboardingUsername() {
     e.preventDefault();
     const u = username.trim();
     if (!/^[A-Za-z0-9_]{3,30}$/.test(u)) {
-      toast.error("یوزەرنەیم پێویستە ٣-٣٠ پیت/ژمارە/_ بێت");
+      toast.error("Username پێویستە لەنێوان ٣-٣٠ (ژمارە یاخود پیت) بێت");
       return;
     }
     setLoading(true);
