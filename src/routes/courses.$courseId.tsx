@@ -142,19 +142,28 @@ function CoursePage() {
     <div className="container mx-auto grid gap-8 px-4 py-10 lg:grid-cols-[1fr_360px]">
       <div className="space-y-6">
         <div className="aspect-video overflow-hidden rounded-xl bg-black">
+          <div className="relative h-full w-full">
           {(() => {
             const v = canPlay ? resolveVideo(videoUrl) : null;
             if (current && v) {
               return v.kind === "video" ? (
                 <video key={current.id} controls className="h-full w-full" src={v.src} />
               ) : (
-                <iframe
-                  key={current.id}
-                  src={v.src}
-                  className="h-full w-full"
-                  allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-                  allowFullScreen
-                />
+                <>
+                  <iframe
+                    key={current.id}
+                    src={v.src}
+                    className="h-full w-full"
+                    allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+                    allowFullScreen
+                  />
+                  {v.src.includes("drive.google.com") && (
+                    <div
+                      className="absolute right-0 top-0 h-12 w-16 bg-black"
+                      aria-hidden="true"
+                    />
+                  )}
+                </>
               );
             }
             return (
@@ -164,6 +173,7 @@ function CoursePage() {
               </div>
             );
           })()}
+          </div>
         </div>
         <div>
           <h1 className="text-3xl font-bold">{course.title}</h1>
