@@ -67,7 +67,7 @@ function Index() {
               </h1>
               <p className="text-lg text-muted-foreground">
                 کۆرسی تایبەت بە چەندین بوار. باڵانسەکەت زیاد بکە بە ئێف ئایبی، فاستپەی یاخود سوپەرکی،
-                دواتر کۆرسەکانی دڵخوازت بکڕە.
+                دواتر کۆرسی دڵخوازت بکڕە.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Link to="/courses"><Button size="lg">بینینی کۆرسەکان</Button></Link>
@@ -98,7 +98,7 @@ function Index() {
               <h2 className="text-2xl font-bold md:text-3xl">کۆرسە تازەکان</h2>
               <p className="text-muted-foreground">نوێترین وانەکانی پلاتفۆڕم</p>
             </div>
-            <Link to="/courses"><Button variant="ghost">بینینی هەموو ←</Button></Link>
+            <Link to="/courses"><Button variant="ghost">بینینی هەموو کۆرسەکان ←</Button></Link>
           </div>
           {!courses?.length ? (
             <div className="rounded-xl border border-dashed p-12 text-center text-muted-foreground">
