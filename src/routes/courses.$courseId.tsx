@@ -163,15 +163,13 @@ function CoursePage() {
                     allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
                     allowFullScreen
                   />
-                  {v.src.includes("drive.google.com") && (
-                    <img
+                  <img
                       src={peshangLogo.url}
                       alt=""
                       aria-hidden="true"
                       onClick={(e) => e.preventDefault()}
                       className="absolute right-0 top-0 h-14 w-14 cursor-default object-cover"
                     />
-                  )}
                 </>
               );
             }
