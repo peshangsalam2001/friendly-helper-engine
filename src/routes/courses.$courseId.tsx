@@ -147,14 +147,6 @@ function CoursePage() {
   if (isLoading) return <div className="container mx-auto p-10">چاوەڕێبە...</div>;
   if (!course) return <div className="container mx-auto p-10">کۆرسەکە نەدۆزرایەوە</div>;
 
-  const fmtTime = (s: number) => {
-    const h = Math.floor(s / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    const sec = Math.floor(s % 60);
-    const pad = (n: number) => n.toString().padStart(2, "0");
-    return h ? `${h}:${pad(m)}:${pad(sec)}` : `${m}:${pad(sec)}`;
-  };
-
   return (
     <div className="container mx-auto grid gap-8 px-4 py-10 lg:grid-cols-[1fr_360px]">
       <div className="space-y-6">
