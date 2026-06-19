@@ -37,7 +37,7 @@ function Account() {
     enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("topup_requests").select("*").order("created_at", { ascending: false }).limit(10);
+        .from("topup_requests").select("*").eq("user_id", user!.id).order("created_at", { ascending: false }).limit(10);
       if (error) throw error;
       return data;
     },
