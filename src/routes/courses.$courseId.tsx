@@ -4,6 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Lock, PlayCircle, CheckCircle2, Users, User } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -50,6 +60,7 @@ function CoursePage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [activeLesson, setActiveLesson] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const { data: course, isLoading } = useQuery({
     queryKey: ["course", courseId],
@@ -218,7 +229,7 @@ function CoursePage() {
                 داخڵبە بۆ کڕین
               </Button>
             ) : (
-              <Button className="w-full" disabled={purchase.isPending} onClick={() => purchase.mutate()}>
+              <Button className="w-full" disabled={purchase.isPending} onClick={() => setConfirmOpen(true)}>
                 {purchase.isPending ? "چاوەڕێبە..." : "کڕینی کۆرس"}
               </Button>
             )}
@@ -227,6 +238,19 @@ function CoursePage() {
             )}
           </CardContent>
         </Card>
+
+        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>ئایا دڵنیایت ئەم کۆرسە بکڕیت؟</AlertDialogTitle>
+              <AlertDialogDescription>دوای کڕین بڕی کۆرسەکە لە باڵانسەکەت کەم دەکرێتەوە.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>نەخێر</AlertDialogCancel>
+              <AlertDialogAction onClick={() => purchase.mutate()}>بەڵێ دڵنیام</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <Card>
           <CardContent className="p-3">
