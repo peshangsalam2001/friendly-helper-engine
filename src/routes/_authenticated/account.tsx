@@ -103,7 +103,7 @@ function Account() {
                   t.status === "rejected" ? "bg-red-100 text-red-700" :
                   "bg-amber-100 text-amber-700"
                 }`}>
-                  {t.status === "approved" ? "پەسەند کرا" : t.status === "rejected" ? "ڕەتکرایەوە" : "چاوەڕێ"}
+                  {t.status === "approved" ? "قبوڵکرا" : t.status === "rejected" ? "ڕەتکرایەوە" : "چاوەڕێبە تا قبوڵ ئەکرێت"}
                 </span>
               </li>
             ))}
