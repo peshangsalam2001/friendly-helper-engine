@@ -74,13 +74,15 @@ function CoursesList() {
                     <span className="flex items-center gap-1"><BookOpen className="h-3.5 w-3.5" /> {lessonCount} وانە</span>
                     <BuyerCount courseId={c.id} />
                   </div>
-                  {owned ? (
-                    <div className="flex items-center gap-1.5 font-bold text-emerald-600 dark:text-emerald-400">
-                      <CheckCircle2 className="h-4 w-4" /> کڕاوە
-                    </div>
-                  ) : (
-                    <div className="font-bold text-primary">5,000 د.ع</div>
-                  )}
+                   {owned ? (
+                     <div className="flex items-center gap-1.5 font-bold text-emerald-600 dark:text-emerald-400">
+                       <CheckCircle2 className="h-4 w-4" /> کڕاوە
+                     </div>
+                   ) : Number(c.price) === 0 ? (
+                     <div className="font-bold text-emerald-600 dark:text-emerald-400">بەخۆڕایی</div>
+                   ) : (
+                     <div className="font-bold text-primary">{Number(c.price).toLocaleString()} د.ع</div>
+                   )}
                 </CardContent>
               </Card>
             </Link>
