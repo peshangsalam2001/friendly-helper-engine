@@ -213,19 +213,23 @@ function CoursePage() {
         <Card>
           <CardContent className="space-y-4 p-5">
             <div className="text-sm text-muted-foreground">نرخی کۆرس</div>
-            <div className="text-3xl font-bold text-primary">5,000 د.ع</div>
+            {Number(course.price) === 0 ? (
+              <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">بەخۆڕایی</div>
+            ) : (
+              <div className="text-3xl font-bold text-primary">{Number(course.price).toLocaleString()} د.ع</div>
+            )}
             {enrolled ? (
               <Button disabled className="w-full gap-2"><CheckCircle2 className="h-4 w-4" /> کڕاوە</Button>
             ) : !user ? (
               <Button className="w-full" onClick={() => navigate({ to: "/auth", search: { mode: "signin" } })}>
-                داخڵبە بۆ کڕین
+                {Number(course.price) === 0 ? "داخڵبە بۆ وەرگرتن" : "داخڵبە بۆ کڕین"}
               </Button>
             ) : (
-              <Button className="w-full" disabled={purchase.isPending} onClick={() => setConfirmOpen(true)}>
-                {purchase.isPending ? "چاوەڕێبە..." : "کڕینی کۆرس"}
+              <Button className="w-full" disabled={purchase.isPending} onClick={() => Number(course.price) === 0 ? purchase.mutate() : setConfirmOpen(true)}>
+                {purchase.isPending ? "چاوەڕێبە..." : Number(course.price) === 0 ? "وەرگرتنی کۆرس" : "کڕینی کۆرس"}
               </Button>
             )}
-            {!enrolled && user && (
+            {!enrolled && user && Number(course.price) > 0 && (
               <Link to="/topup"><Button variant="outline" className="w-full">زیادکردنی باڵانس</Button></Link>
             )}
           </CardContent>
