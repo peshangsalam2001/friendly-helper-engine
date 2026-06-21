@@ -309,6 +309,47 @@ function LessonsTab() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["admin-lessons"] }); toast.success("سڕایەوە"); },
   });
 
+  const emptyRow = () => ({ title: "", description: "", video_url: "", duration_min: "", is_preview: false });
+  const [bulkRows, setBulkRows] = useState<any[]>([emptyRow(), emptyRow(), emptyRow()]);
+  const [autoTitle, setAutoTitle] = useState("وانەی");
+  const [startIndex, setStartIndex] = useState("");
+
+  const bulkCreate = useMutation({
+    mutationFn: async () => {
+      const rows = bulkRows.filter(r => r.title.trim() || r.video_url.trim());
+      if (!rows.length) throw new Error("هیچ وانەیەک نییە");
+      const baseOrder = Number(startIndex) || ((lessons?.length ?? 0) + 1);
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        const title = r.title.trim() || `${autoTitle} ${baseOrder + i}`;
+        const payload: any = {
+          course_id: courseId,
+          title,
+          description: r.description || null,
+          duration_seconds: Math.round((Number(r.duration_min) || 0) * 60),
+          order_index: baseOrder + i,
+          is_preview: !!r.is_preview,
+        };
+        const { data, error } = await supabase.from("lessons").insert(payload).select("id").single();
+        if (error) throw error;
+        if (r.video_url.trim()) {
+          const { error: vErr } = await (supabase as any).rpc("set_lesson_video", {
+            _lesson_id: data.id, _video_url: r.video_url.trim(),
+          });
+          if (vErr) throw vErr;
+        }
+      }
+      return rows.length;
+    },
+    onSuccess: (n) => {
+      qc.invalidateQueries({ queryKey: ["admin-lessons"] });
+      setBulkRows([emptyRow(), emptyRow(), emptyRow()]);
+      setStartIndex("");
+      toast.success(`${n} وانە زیادکرا`);
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   return (
     <div className="space-y-4">
       <Card><CardContent className="space-y-3 p-5">
@@ -332,6 +373,58 @@ function LessonsTab() {
               <Button className="sm:col-span-2" disabled={create.isPending}>{editingL ? "پاشەکەوت" : "زیادکردن"}</Button>
               {editingL && <Button type="button" variant="outline" className="sm:col-span-2" onClick={()=>setForm(emptyL)}>پاشگەزبوونەوە</Button>}
             </form>
+          </CardContent></Card>
+
+          <Card><CardContent className="p-5">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-bold">زیادکردنی کۆمەڵێک وانە یەکجار</h3>
+              <Button type="button" size="sm" variant="outline" onClick={()=>setBulkRows([...bulkRows, emptyRow()])}>
+                <Plus className="ml-1 h-4 w-4" /> ڕیزی نوێ
+              </Button>
+            </div>
+            <div className="mb-3 grid gap-3 sm:grid-cols-2">
+              <div>
+                <Label>پێشگری ناوی خۆکار (کاتێک ناونیشان بەتاڵ بێت)</Label>
+                <Input value={autoTitle} onChange={e=>setAutoTitle(e.target.value)} placeholder="وانەی" />
+              </div>
+              <div>
+                <Label>دەستپێکی ڕیزبەندی (ئیختیاری)</Label>
+                <Input type="number" value={startIndex} onChange={e=>setStartIndex(e.target.value)} placeholder={String((lessons?.length ?? 0) + 1)} />
+              </div>
+            </div>
+            <div className="space-y-3">
+              {bulkRows.map((r, idx) => (
+                <div key={idx} className="grid gap-2 rounded-md border p-3 sm:grid-cols-12">
+                  <div className="sm:col-span-4">
+                    <Label className="text-xs">ناونیشان</Label>
+                    <Input value={r.title} onChange={e=>{ const n=[...bulkRows]; n[idx]={...r,title:e.target.value}; setBulkRows(n); }} placeholder={`${autoTitle} ${(Number(startIndex)||((lessons?.length ?? 0)+1)) + idx}`} />
+                  </div>
+                  <div className="sm:col-span-5">
+                    <Label className="text-xs">بەستەری ڤیدیۆ</Label>
+                    <Input value={r.video_url} onChange={e=>{ const n=[...bulkRows]; n[idx]={...r,video_url:e.target.value}; setBulkRows(n); }} placeholder="https://..." />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label className="text-xs">ماوە (خولەک)</Label>
+                    <Input type="number" value={r.duration_min} onChange={e=>{ const n=[...bulkRows]; n[idx]={...r,duration_min:e.target.value}; setBulkRows(n); }} />
+                  </div>
+                  <div className="flex items-end justify-end sm:col-span-1">
+                    <Button type="button" size="icon" variant="ghost" onClick={()=>setBulkRows(bulkRows.filter((_,i)=>i!==idx))}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                  <div className="sm:col-span-11">
+                    <Label className="text-xs">وەسف (ئیختیاری)</Label>
+                    <Textarea rows={1} value={r.description} onChange={e=>{ const n=[...bulkRows]; n[idx]={...r,description:e.target.value}; setBulkRows(n); }} />
+                  </div>
+                  <label className="flex items-end gap-2 text-xs sm:col-span-1">
+                    <input type="checkbox" checked={r.is_preview} onChange={e=>{ const n=[...bulkRows]; n[idx]={...r,is_preview:e.target.checked}; setBulkRows(n); }} /> نموونە
+                  </label>
+                </div>
+              ))}
+            </div>
+            <Button className="mt-3 w-full" disabled={bulkCreate.isPending} onClick={()=>bulkCreate.mutate()}>
+              {bulkCreate.isPending ? "زیادکردن..." : "زیادکردنی هەموو وانەکان"}
+            </Button>
           </CardContent></Card>
 
           <Card><CardContent className="p-0">
