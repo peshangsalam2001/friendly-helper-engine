@@ -59,10 +59,6 @@ function Messages() {
     },
   });
 
-  useEffect(() => {
-    if (!activeId && convs?.length) setActiveId(convs[0].id);
-  }, [convs, activeId]);
-
   // realtime new conversations
   useEffect(() => {
     const ch = supabase.channel("conv-list")
@@ -85,6 +81,26 @@ function Messages() {
     if (c.title) return c.title;
     return c.type === "support" ? "پشتگیری" : c.type === "course_group" ? "گرووپی کۆرس" : "گفتوگۆ";
   }
+
+  const uniqueConvs = useMemo(() => {
+    if (!convs) return [];
+    if (!parts || !user) return convs;
+
+    const seenDmUsers = new Set<string>();
+    return convs.filter(c => {
+      if (c.type !== "dm") return true;
+      const other = parts.find(p => p.conversation_id === c.id && p.user_id !== user.id);
+      if (!other) return true;
+      if (seenDmUsers.has(other.user_id)) return false;
+      seenDmUsers.add(other.user_id);
+      return true;
+    });
+  }, [convs, parts, user]);
+
+  useEffect(() => {
+    if (!activeId && uniqueConvs.length) setActiveId(uniqueConvs[0].id);
+    if (activeId && uniqueConvs.length && !uniqueConvs.some(c => c.id === activeId)) setActiveId(uniqueConvs[0].id);
+  }, [uniqueConvs, activeId]);
 
   // Inline user search
   const trimmed = query.trim();
@@ -116,12 +132,12 @@ function Messages() {
 
   const filteredConvs = useMemo(() => {
     const q = trimmed.toLowerCase();
-    if (!q) return convs || [];
-    return (convs || []).filter(c =>
+    if (!q) return uniqueConvs;
+    return uniqueConvs.filter(c =>
       nameFor(c).toLowerCase().includes(q) || nameFor(c, "full_name").toLowerCase().includes(q),
     );
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [convs, parts, profiles, trimmed]);
+  }, [uniqueConvs, parts, profiles, trimmed]);
 
   const activeConv = convs?.find(c => c.id === activeId);
   const showSearchResults = trimmed.length >= 2;
