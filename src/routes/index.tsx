@@ -130,7 +130,11 @@ function Index() {
                           <CheckCircle2 className="h-4 w-4" /> کڕاوە
                         </div>
                       ) : (
-                        <div className="font-bold text-primary">5,000 د.ع</div>
+                        Number(c.price) > 0 ? (
+                          <div className="font-bold text-primary">{Number(c.price).toLocaleString()} د.ع</div>
+                        ) : (
+                          <div className="font-bold text-emerald-600 dark:text-emerald-400">بەخۆڕایی</div>
+                        )
                       )}
                     </CardContent>
                   </Card>
