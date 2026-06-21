@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useIsAdmin } from "@/lib/auth";
-import { Send, Search, Users, MessageCircle, Paperclip, X, ShieldCheck, ArrowRight, Headphones } from "lucide-react";
+import { Send, Search, Users, MessageCircle, Paperclip, X, ShieldCheck, ArrowRight, Headphones, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/messages")({ component: Messages });
@@ -276,6 +276,7 @@ function Messages() {
                 activeConv.type === "support" ? "تیمی پشتگیری" :
                 activeConv.type === "course_group" ? "گرووپی کۆرس" : ""
               }
+              isAdmin={!!isAdmin}
             />
           ) : (
             <div className="grid flex-1 place-items-center p-6 text-center text-muted-foreground">
@@ -305,7 +306,7 @@ function Avatar({ name, admin }: { name: string; admin?: boolean }) {
   );
 }
 
-function ChatPanel({ conversationId, title, subtitle }: { conversationId: string; title: string; subtitle?: string }) {
+function ChatPanel({ conversationId, title, subtitle, isAdmin }: { conversationId: string; title: string; subtitle?: string; isAdmin?: boolean }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const [text, setText] = useState("");
@@ -334,6 +335,8 @@ function ChatPanel({ conversationId, title, subtitle }: { conversationId: string
     const ch = supabase.channel(`chat-${conversationId}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages", filter: `conversation_id=eq.${conversationId}` },
         () => qc.invalidateQueries({ queryKey: ["chat", conversationId] }))
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "chat_messages", filter: `conversation_id=eq.${conversationId}` },
+        () => qc.invalidateQueries({ queryKey: ["chat", conversationId] }))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [conversationId, qc]);
@@ -346,6 +349,19 @@ function ChatPanel({ conversationId, title, subtitle }: { conversationId: string
       if (error) throw error;
     },
     onSuccess: () => { setText(""); setPending([]); qc.invalidateQueries({ queryKey: ["chat", conversationId] }); },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const del = useMutation({
+    mutationFn: async (m: { id: string; attachments: Attachment[] }) => {
+      const paths = (m.attachments || []).map(a => a.path).filter(Boolean);
+      if (paths.length) {
+        await supabase.storage.from("chat-attachments").remove(paths);
+      }
+      const { error } = await sb.from("chat_messages").delete().eq("id", m.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("پەیام سڕایەوە"); qc.invalidateQueries({ queryKey: ["chat", conversationId] }); },
     onError: (e: any) => toast.error(e.message),
   });
 
@@ -399,19 +415,34 @@ function ChatPanel({ conversationId, title, subtitle }: { conversationId: string
                 {!mine && !sameSender && (
                   <div className="mb-0.5 px-3 text-[11px] font-medium text-muted-foreground">{senderName}</div>
                 )}
-                <div
-                  className={`px-3.5 py-2 text-sm shadow-sm ${
-                    mine
-                      ? `bg-primary text-primary-foreground ${sameSender ? "rounded-2xl rounded-br-md" : "rounded-2xl rounded-br-sm"}`
-                      : `border bg-background ${sameSender ? "rounded-2xl rounded-bl-md" : "rounded-2xl rounded-bl-sm"}`
-                  }`}
-                >
-                  {m.body && <div className="whitespace-pre-wrap break-words">{m.body}</div>}
-                  {m.attachments?.length > 0 && (
-                    <div className={`${m.body ? "mt-2" : ""} space-y-2`}>
-                      {m.attachments.map((a, i) => <AttachmentView key={i} a={a} />)}
-                    </div>
+                <div className={`flex items-center gap-1.5 ${mine ? "flex-row" : "flex-row-reverse"}`}>
+                  {(isAdmin || mine) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm("ئەم پەیامە بسڕیتەوە؟")) del.mutate({ id: m.id, attachments: m.attachments || [] });
+                      }}
+                      className="opacity-0 transition group-hover:opacity-100 text-muted-foreground hover:text-destructive p-1 rounded"
+                      title="سڕینەوەی پەیام"
+                      disabled={del.isPending}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   )}
+                  <div
+                    className={`px-3.5 py-2 text-sm shadow-sm ${
+                      mine
+                        ? `bg-primary text-primary-foreground ${sameSender ? "rounded-2xl rounded-br-md" : "rounded-2xl rounded-br-sm"}`
+                        : `border bg-background ${sameSender ? "rounded-2xl rounded-bl-md" : "rounded-2xl rounded-bl-sm"}`
+                    }`}
+                  >
+                    {m.body && <div className="whitespace-pre-wrap break-words">{m.body}</div>}
+                    {m.attachments?.length > 0 && (
+                      <div className={`${m.body ? "mt-2" : ""} space-y-2`}>
+                        {m.attachments.map((a, i) => <AttachmentView key={i} a={a} />)}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="mt-0.5 px-2 text-[10px] text-muted-foreground opacity-0 transition group-hover:opacity-100">{time}</div>
               </div>
