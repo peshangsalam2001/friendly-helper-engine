@@ -43,7 +43,7 @@ function Messages() {
   const { data: profiles } = useQuery({
     queryKey: ["public_profiles"],
     queryFn: async () => {
-      const { data, error } = await sb.from("public_profiles").select("id, full_name, username");
+      const { data, error } = await sb.rpc("get_public_profiles");
       if (error) throw error;
       return data as { id: string; full_name: string | null; username: string | null }[];
     },
@@ -296,7 +296,7 @@ function ChatPanel({ conversationId, title, subtitle }: { conversationId: string
   const { data: profiles } = useQuery({
     queryKey: ["public_profiles"],
     queryFn: async () => {
-      const { data } = await sb.from("public_profiles").select("id, full_name");
+      const { data } = await sb.rpc("get_public_profiles");
       return (data || []) as { id: string; full_name: string | null }[];
     },
   });
