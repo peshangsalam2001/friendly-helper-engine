@@ -78,8 +78,9 @@ function Messages() {
       const others = parts.filter(p => p.conversation_id === c.id && p.user_id !== user.id);
       const other = others[0];
       const p = profiles.find(p => p.id === other?.user_id);
-      if (prefer === "username") return p?.username || p?.full_name || "نامەی تایبەت";
-      return p?.full_name || p?.username || "نامەی تایبەت";
+      const a = prefer === "username" ? p?.username : p?.full_name;
+      const b = prefer === "username" ? p?.full_name : p?.username;
+      return a || b || "بەکارهێنەر";
     }
     if (c.title) return c.title;
     return c.type === "support" ? "پشتگیری" : c.type === "course_group" ? "گرووپی کۆرس" : "گفتوگۆ";
@@ -243,8 +244,8 @@ function Messages() {
               conversationId={activeConv.id}
               title={nameFor(activeConv, "full_name")}
               subtitle={
-                activeConv.type === "dm" ? "گفتوگۆی تایبەت" :
-                activeConv.type === "support" ? "پشتگیری" :
+                activeConv.type === "dm" ? "ئۆنلاین" :
+                activeConv.type === "support" ? "تیمی پشتگیری" :
                 activeConv.type === "course_group" ? "گرووپی کۆرس" : ""
               }
             />
@@ -346,28 +347,44 @@ function ChatPanel({ conversationId, title, subtitle }: { conversationId: string
 
   return (
     <>
-      <div className="flex items-center gap-3 border-b bg-gradient-to-l from-primary/10 to-transparent p-4">
-        <Avatar name={title} />
+      <div className="flex items-center gap-3 border-b bg-background/80 p-3 backdrop-blur">
+        <div className="relative">
+          <Avatar name={title} />
+          <span className="absolute -bottom-0.5 -left-0.5 h-3 w-3 rounded-full border-2 border-background bg-emerald-500" />
+        </div>
         <div className="min-w-0">
-          <div className="truncate font-semibold">{title}</div>
-          {subtitle && <div className="text-xs text-muted-foreground">{subtitle}</div>}
+          <div className="truncate font-semibold leading-tight">{title}</div>
+          {subtitle && <div className="text-[11px] text-emerald-600">{subtitle}</div>}
         </div>
       </div>
-      <div className="flex-1 space-y-3 overflow-y-auto bg-muted/20 p-4">
-        {messages?.map(m => {
+      <div className="flex-1 space-y-1 overflow-y-auto bg-[radial-gradient(circle_at_top,hsl(var(--muted)/0.4),transparent_60%)] p-4">
+        {messages?.map((m, idx) => {
           const mine = m.sender_id === user?.id;
+          const prev = messages[idx - 1];
+          const sameSender = prev && prev.sender_id === m.sender_id && (new Date(m.created_at).getTime() - new Date(prev.created_at).getTime()) < 5 * 60 * 1000;
           const senderName = profiles?.find(p => p.id === m.sender_id)?.full_name || "بەکارهێنەر";
+          const time = new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
           return (
-            <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[75%] rounded-2xl px-4 py-2 shadow-sm ${mine ? "rounded-br-sm bg-primary text-primary-foreground" : "rounded-bl-sm border bg-background"}`}>
-                {!mine && <div className="mb-1 text-xs font-semibold opacity-70">{senderName}</div>}
-                {m.body && <div className="whitespace-pre-wrap text-sm">{m.body}</div>}
-                {m.attachments?.length > 0 && (
-                  <div className="mt-2 space-y-2">
-                    {m.attachments.map((a, i) => <AttachmentView key={i} a={a} />)}
-                  </div>
+            <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"} ${sameSender ? "mt-0.5" : "mt-3"}`}>
+              <div className={`group flex max-w-[78%] flex-col ${mine ? "items-end" : "items-start"}`}>
+                {!mine && !sameSender && (
+                  <div className="mb-0.5 px-3 text-[11px] font-medium text-muted-foreground">{senderName}</div>
                 )}
-                <div className="mt-1 text-[10px] opacity-60">{new Date(m.created_at).toLocaleTimeString()}</div>
+                <div
+                  className={`px-3.5 py-2 text-sm shadow-sm ${
+                    mine
+                      ? `bg-primary text-primary-foreground ${sameSender ? "rounded-2xl rounded-br-md" : "rounded-2xl rounded-br-sm"}`
+                      : `border bg-background ${sameSender ? "rounded-2xl rounded-bl-md" : "rounded-2xl rounded-bl-sm"}`
+                  }`}
+                >
+                  {m.body && <div className="whitespace-pre-wrap break-words">{m.body}</div>}
+                  {m.attachments?.length > 0 && (
+                    <div className={`${m.body ? "mt-2" : ""} space-y-2`}>
+                      {m.attachments.map((a, i) => <AttachmentView key={i} a={a} />)}
+                    </div>
+                  )}
+                </div>
+                <div className="mt-0.5 px-2 text-[10px] text-muted-foreground opacity-0 transition group-hover:opacity-100">{time}</div>
               </div>
             </div>
           );
