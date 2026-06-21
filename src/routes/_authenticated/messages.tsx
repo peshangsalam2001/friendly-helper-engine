@@ -78,8 +78,9 @@ function Messages() {
       const others = parts.filter(p => p.conversation_id === c.id && p.user_id !== user.id);
       const other = others[0];
       const p = profiles.find(p => p.id === other?.user_id);
-      if (prefer === "username") return p?.username || p?.full_name || "نامەی تایبەت";
-      return p?.full_name || p?.username || "نامەی تایبەت";
+      const a = prefer === "username" ? p?.username : p?.full_name;
+      const b = prefer === "username" ? p?.full_name : p?.username;
+      return a || b || "بەکارهێنەر";
     }
     if (c.title) return c.title;
     return c.type === "support" ? "پشتگیری" : c.type === "course_group" ? "گرووپی کۆرس" : "گفتوگۆ";
@@ -243,8 +244,8 @@ function Messages() {
               conversationId={activeConv.id}
               title={nameFor(activeConv, "full_name")}
               subtitle={
-                activeConv.type === "dm" ? "گفتوگۆی تایبەت" :
-                activeConv.type === "support" ? "پشتگیری" :
+                activeConv.type === "dm" ? "ئۆنلاین" :
+                activeConv.type === "support" ? "تیمی پشتگیری" :
                 activeConv.type === "course_group" ? "گرووپی کۆرس" : ""
               }
             />
