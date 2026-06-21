@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Wallet, BookOpen, Mail, Bell } from "lucide-react";
+import { Wallet, BookOpen, Mail, Bell, AtSign, Phone, User as UserIcon } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
@@ -45,8 +45,39 @@ function Account() {
 
   return (
     <div className="container mx-auto max-w-5xl px-4 py-10">
-      <h1 className="mb-1 text-3xl font-bold">{profile?.full_name || "هەژمارەکەم"}</h1>
-      <p className="mb-8 text-muted-foreground">{user?.email}</p>
+      <Card className="mb-8 overflow-hidden border-0 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
+        <CardContent className="p-6 sm:p-8">
+          <div className="flex items-center gap-5">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/60 text-3xl font-bold text-primary-foreground shadow-lg ring-4 ring-background">
+              {(profile?.full_name || profile?.username || user?.email || "?").charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate text-2xl font-bold sm:text-3xl">{profile?.full_name || "هەژمارەکەم"}</h1>
+              <p className="truncate text-sm text-muted-foreground">{user?.email}</p>
+            </div>
+          </div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <div className="flex items-center gap-3 rounded-xl border bg-background/60 p-3 backdrop-blur">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <AtSign className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs text-muted-foreground">نازناو</div>
+                <div className="truncate font-semibold">{profile?.username || "—"}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 rounded-xl border bg-background/60 p-3 backdrop-blur">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Phone className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs text-muted-foreground">ژمارەی مۆبایل</div>
+                <div dir="ltr" className="truncate text-right font-semibold">{profile?.phone || "—"}</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="mb-8 grid gap-4 sm:grid-cols-3">
         <Card><CardContent className="p-5">
