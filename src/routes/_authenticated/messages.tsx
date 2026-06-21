@@ -182,7 +182,7 @@ function Messages() {
                           )}
                         </div>
                         <div className="truncate text-xs text-muted-foreground">
-                          {u.full_name || ""}{u.phone ? ` • ${u.phone}` : ""}
+                          {u.full_name || ""}
                         </div>
                       </div>
                       <MessageCircle className="h-4 w-4 shrink-0 text-muted-foreground" />
