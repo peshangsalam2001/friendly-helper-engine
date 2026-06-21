@@ -80,7 +80,7 @@ function Messages() {
       const p = profiles.find(p => p.id === other?.user_id);
       const a = prefer === "username" ? p?.username : p?.full_name;
       const b = prefer === "username" ? p?.full_name : p?.username;
-      return a || b || "بەکارهێنەر";
+      return a || b || (other?.user_id ? `#${other.user_id.slice(0, 6)}` : "گفتوگۆ");
     }
     if (c.title) return c.title;
     return c.type === "support" ? "پشتگیری" : c.type === "course_group" ? "گرووپی کۆرس" : "گفتوگۆ";
@@ -174,7 +174,7 @@ function Messages() {
                       <Avatar name={u.username || u.full_name || "?"} admin={u.is_admin} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 truncate text-sm font-semibold">
-                          {u.username || u.full_name || "بەکارهێنەر"}
+                          {u.username || u.full_name || `#${u.id.slice(0, 6)}`}
                           {u.is_admin && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] text-primary">
                               <ShieldCheck className="h-3 w-3" /> ئەدمین
@@ -362,7 +362,8 @@ function ChatPanel({ conversationId, title, subtitle }: { conversationId: string
           const mine = m.sender_id === user?.id;
           const prev = messages[idx - 1];
           const sameSender = prev && prev.sender_id === m.sender_id && (new Date(m.created_at).getTime() - new Date(prev.created_at).getTime()) < 5 * 60 * 1000;
-          const senderName = profiles?.find(p => p.id === m.sender_id)?.full_name || "بەکارهێنەر";
+          const sp = profiles?.find(p => p.id === m.sender_id);
+          const senderName = sp?.username || sp?.full_name || `#${m.sender_id.slice(0, 6)}`;
           const time = new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
           return (
             <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"} ${sameSender ? "mt-0.5" : "mt-3"}`}>
