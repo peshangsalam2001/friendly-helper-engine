@@ -4,10 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useIsAdmin } from "@/lib/auth";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Send, Search, Megaphone, Users, MessageCircle, Paperclip, X, ShieldCheck, User as UserIcon } from "lucide-react";
+import { Send, Search, Users, MessageCircle, Paperclip, X, ShieldCheck, User as UserIcon, ArrowRight, Headphones } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/messages")({ component: Messages });
@@ -29,14 +28,14 @@ function Messages() {
   const { data: isAdmin } = useIsAdmin();
   const qc = useQueryClient();
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [listQuery, setListQuery] = useState("");
+  const [query, setQuery] = useState("");
 
   const { data: convs } = useQuery({
     queryKey: ["conversations"],
     queryFn: async () => {
       const { data, error } = await sb.from("conversations").select("*").order("updated_at", { ascending: false });
       if (error) throw error;
-      return data as Conversation[];
+      return (data as Conversation[]).filter(c => c.type !== "announcement");
     },
   });
 
@@ -83,58 +82,179 @@ function Messages() {
       return p?.full_name || p?.username || "نامەی تایبەت";
     }
     if (c.title) return c.title;
-    return c.type === "support" ? "پشتگیری" : c.type === "course_group" ? "گرووپی کۆرس" : "ڕاگەیاندن";
+    return c.type === "support" ? "پشتگیری" : c.type === "course_group" ? "گرووپی کۆرس" : "گفتوگۆ";
   }
+
+  // Inline user search
+  const trimmed = query.trim();
+  const { data: searchResults, isFetching: searching } = useQuery({
+    queryKey: ["user_search", trimmed],
+    enabled: trimmed.length >= 2,
+    queryFn: async () => {
+      const { data, error } = await sb.rpc("search_users", { _q: trimmed });
+      if (error) throw error;
+      return data as { id: string; username: string | null; full_name: string | null; phone: string | null; is_admin: boolean }[];
+    },
+  });
+
+  async function startDm(otherId: string) {
+    const { data, error } = await sb.rpc("start_dm", { _other: otherId });
+    if (error) return toast.error(error.message);
+    await qc.invalidateQueries({ queryKey: ["conversations"] });
+    setQuery("");
+    if (data) setActiveId(data as string);
+    toast.success("گفتوگۆ کرایەوە");
+  }
+
+  async function startSupport() {
+    const { data, error } = await sb.rpc("start_support_chat");
+    if (error) return toast.error(error.message);
+    await qc.invalidateQueries({ queryKey: ["conversations"] });
+    if (data) setActiveId(data as string);
+  }
+
+  const filteredConvs = useMemo(() => {
+    const q = trimmed.toLowerCase();
+    if (!q) return convs || [];
+    return (convs || []).filter(c =>
+      nameFor(c).toLowerCase().includes(q) || nameFor(c, "full_name").toLowerCase().includes(q),
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [convs, parts, profiles, trimmed]);
+
+  const activeConv = convs?.find(c => c.id === activeId);
+  const showSearchResults = trimmed.length >= 2;
 
   return (
     <div className="container mx-auto max-w-6xl px-4 py-6">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">نامەکان</h1>
-        <div className="flex gap-2">
-          <UserSearchButton />
-          {isAdmin && <AnnounceButton />}
+      <div className="mb-5 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">نامەکان</h1>
+          <p className="text-xs text-muted-foreground">گفتوگۆ لەگەڵ بەکارهێنەران و ئەدمین</p>
         </div>
+        {!isAdmin && (
+          <Button size="sm" variant="outline" className="gap-2" onClick={startSupport}>
+            <Headphones className="h-4 w-4" /> پشتگیری
+          </Button>
+        )}
       </div>
 
-      <div className="grid h-[calc(100vh-220px)] min-h-[500px] gap-4 md:grid-cols-[280px_1fr]">
-        <Card className="overflow-hidden">
-          <div className="flex h-full flex-col">
-            <div className="border-b p-2">
-              <div className="relative">
-                <Search className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input value={listQuery} onChange={e => setListQuery(e.target.value)} placeholder="گەڕان لە لیست..." className="pr-8" />
-              </div>
+      <div className="grid h-[calc(100vh-220px)] min-h-[520px] gap-4 md:grid-cols-[320px_1fr]">
+        <Card className="flex flex-col overflow-hidden border-border/60">
+          <div className="border-b bg-gradient-to-b from-muted/40 to-transparent p-3">
+            <div className="relative">
+              <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                placeholder="گەڕان بۆ بەکارهێنەر یان گفتوگۆ..."
+                className="rounded-full bg-background pr-9"
+              />
             </div>
-            <div className="flex-1 overflow-y-auto">
-            {(() => {
-              const q = listQuery.trim().toLowerCase();
-              const list = (convs || []).filter(c => !q || nameFor(c).toLowerCase().includes(q) || nameFor(c, "full_name").toLowerCase().includes(q));
-              if (!list.length) return <p className="p-6 text-center text-sm text-muted-foreground">هیچ گفتوگۆیەک نییە</p>;
-              return list.map(c => (
-              <button
-                key={c.id}
-                onClick={() => setActiveId(c.id)}
-                className={`flex w-full items-center gap-3 border-b px-4 py-3 text-right transition hover:bg-muted ${activeId === c.id ? "bg-muted" : ""}`}
-              >
-                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
-                  {c.type === "announcement" ? <Megaphone className="h-4 w-4" /> :
-                   c.type === "course_group" ? <Users className="h-4 w-4" /> :
-                   <MessageCircle className="h-4 w-4" />}
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            {showSearchResults && (
+              <div className="border-b">
+                <div className="px-4 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  ئەنجامی گەڕان
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-semibold">{nameFor(c)}</div>
-                  <div className="text-xs text-muted-foreground">{new Date(c.updated_at).toLocaleDateString()}</div>
+                {searching ? (
+                  <p className="p-4 text-center text-xs text-muted-foreground">گەڕان...</p>
+                ) : !searchResults?.length ? (
+                  <p className="p-4 text-center text-xs text-muted-foreground">هیچ بەکارهێنەرێک نەدۆزرایەوە</p>
+                ) : (
+                  searchResults.map(u => (
+                    <button
+                      key={u.id}
+                      onClick={() => startDm(u.id)}
+                      className="flex w-full items-center gap-3 px-4 py-2.5 text-right transition hover:bg-muted/70"
+                    >
+                      <Avatar name={u.username || u.full_name || "?"} admin={u.is_admin} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 truncate text-sm font-semibold">
+                          {u.username || u.full_name || "بەکارهێنەر"}
+                          {u.is_admin && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] text-primary">
+                              <ShieldCheck className="h-3 w-3" /> ئەدمین
+                            </span>
+                          )}
+                        </div>
+                        <div className="truncate text-xs text-muted-foreground">
+                          {u.full_name || ""}{u.phone ? ` • ${u.phone}` : ""}
+                        </div>
+                      </div>
+                      <MessageCircle className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+
+            <div>
+              {showSearchResults && (
+                <div className="px-4 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  گفتوگۆکانم
                 </div>
-              </button>
-              ));
-            })()}
+              )}
+              {!filteredConvs.length ? (
+                <p className="p-6 text-center text-sm text-muted-foreground">هیچ گفتوگۆیەک نییە</p>
+              ) : (
+                filteredConvs.map(c => {
+                  const name = nameFor(c);
+                  const active = activeId === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => setActiveId(c.id)}
+                      className={`flex w-full items-center gap-3 px-4 py-3 text-right transition ${
+                        active ? "bg-primary/10" : "hover:bg-muted/60"
+                      }`}
+                    >
+                      {c.type === "course_group" ? (
+                        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-secondary text-secondary-foreground">
+                          <Users className="h-4 w-4" />
+                        </div>
+                      ) : c.type === "support" ? (
+                        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/15 text-primary">
+                          <Headphones className="h-4 w-4" />
+                        </div>
+                      ) : (
+                        <Avatar name={name} />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-semibold">{name}</div>
+                        <div className="truncate text-xs text-muted-foreground">
+                          {new Date(c.updated_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                      {active && <ArrowRight className="h-3.5 w-3.5 text-primary" />}
+                    </button>
+                  );
+                })
+              )}
             </div>
           </div>
         </Card>
 
-        <Card className="flex h-full flex-col overflow-hidden">
-          {activeId ? <ChatPanel conversationId={activeId} title={nameFor(convs!.find(c => c.id === activeId)!, "full_name")} isAnnouncement={convs?.find(c => c.id === activeId)?.type === "announcement"} /> : (
-            <div className="grid flex-1 place-items-center text-muted-foreground">گفتوگۆیەک هەڵبژێرە</div>
+        <Card className="flex h-full flex-col overflow-hidden border-border/60">
+          {activeConv ? (
+            <ChatPanel
+              conversationId={activeConv.id}
+              title={nameFor(activeConv, "full_name")}
+              subtitle={
+                activeConv.type === "dm" ? "گفتوگۆی تایبەت" :
+                activeConv.type === "support" ? "پشتگیری" :
+                activeConv.type === "course_group" ? "گرووپی کۆرس" : ""
+              }
+            />
+          ) : (
+            <div className="grid flex-1 place-items-center p-6 text-center text-muted-foreground">
+              <div>
+                <MessageCircle className="mx-auto mb-3 h-10 w-10 opacity-40" />
+                <div className="text-sm">گفتوگۆیەک هەڵبژێرە یان بەکارهێنەرێک بدۆزەرەوە</div>
+              </div>
+            </div>
           )}
         </Card>
       </div>
@@ -142,9 +262,22 @@ function Messages() {
   );
 }
 
-function ChatPanel({ conversationId, title, isAnnouncement }: { conversationId: string; title: string; isAnnouncement?: boolean }) {
+function Avatar({ name, admin }: { name: string; admin?: boolean }) {
+  const ch = (name || "?").trim().charAt(0).toUpperCase();
+  return (
+    <div className={`relative grid h-10 w-10 shrink-0 place-items-center rounded-full text-sm font-bold text-primary-foreground ${admin ? "bg-gradient-to-br from-primary to-primary/70" : "bg-gradient-to-br from-primary/80 to-primary/50"}`}>
+      {ch}
+      {admin && (
+        <span className="absolute -bottom-0.5 -right-0.5 grid h-4 w-4 place-items-center rounded-full bg-background ring-1 ring-border">
+          <ShieldCheck className="h-2.5 w-2.5 text-primary" />
+        </span>
+      )}
+    </div>
+  );
+}
+
+function ChatPanel({ conversationId, title, subtitle }: { conversationId: string; title: string; subtitle?: string }) {
   const { user } = useAuth();
-  const { data: isAdmin } = useIsAdmin();
   const qc = useQueryClient();
   const [text, setText] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
@@ -187,7 +320,6 @@ function ChatPanel({ conversationId, title, isAnnouncement }: { conversationId: 
     onError: (e: any) => toast.error(e.message),
   });
 
-  const canSend = !isAnnouncement || isAdmin;
   const [pending, setPending] = useState<Attachment[]>([]);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -214,16 +346,20 @@ function ChatPanel({ conversationId, title, isAnnouncement }: { conversationId: 
 
   return (
     <>
-      <div className="border-b p-4">
-        <div className="font-semibold">{title}</div>
+      <div className="flex items-center gap-3 border-b bg-gradient-to-l from-primary/10 to-transparent p-4">
+        <Avatar name={title} />
+        <div className="min-w-0">
+          <div className="truncate font-semibold">{title}</div>
+          {subtitle && <div className="text-xs text-muted-foreground">{subtitle}</div>}
+        </div>
       </div>
-      <div className="flex-1 space-y-3 overflow-y-auto p-4">
+      <div className="flex-1 space-y-3 overflow-y-auto bg-muted/20 p-4">
         {messages?.map(m => {
           const mine = m.sender_id === user?.id;
           const senderName = profiles?.find(p => p.id === m.sender_id)?.full_name || "بەکارهێنەر";
           return (
             <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[75%] rounded-2xl px-4 py-2 ${mine ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+              <div className={`max-w-[75%] rounded-2xl px-4 py-2 shadow-sm ${mine ? "rounded-br-sm bg-primary text-primary-foreground" : "rounded-bl-sm border bg-background"}`}>
                 {!mine && <div className="mb-1 text-xs font-semibold opacity-70">{senderName}</div>}
                 {m.body && <div className="whitespace-pre-wrap text-sm">{m.body}</div>}
                 {m.attachments?.length > 0 && (
@@ -238,11 +374,10 @@ function ChatPanel({ conversationId, title, isAnnouncement }: { conversationId: 
         })}
         <div ref={endRef} />
       </div>
-      {canSend ? (
-        <form
-          onSubmit={e => { e.preventDefault(); if (text.trim() || pending.length) send.mutate({ body: text.trim(), attachments: pending }); }}
-          className="border-t p-3"
-        >
+      <form
+        onSubmit={e => { e.preventDefault(); if (text.trim() || pending.length) send.mutate({ body: text.trim(), attachments: pending }); }}
+        className="border-t bg-background p-3"
+      >
           {pending.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-2">
               {pending.map((a, i) => (
@@ -255,14 +390,11 @@ function ChatPanel({ conversationId, title, isAnnouncement }: { conversationId: 
           )}
           <div className="flex gap-2">
             <input ref={fileRef} type="file" hidden multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.zip" onChange={e => handleFiles(e.target.files)} />
-            <Button type="button" size="icon" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading}><Paperclip className="h-4 w-4" /></Button>
-            <Input value={text} onChange={e => setText(e.target.value)} placeholder="نووسە..." />
-            <Button type="submit" size="icon" disabled={(!text.trim() && !pending.length) || send.isPending || uploading}><Send className="h-4 w-4" /></Button>
+            <Button type="button" size="icon" variant="outline" className="rounded-full" onClick={() => fileRef.current?.click()} disabled={uploading}><Paperclip className="h-4 w-4" /></Button>
+            <Input value={text} onChange={e => setText(e.target.value)} placeholder="پەیامێک بنووسە..." className="rounded-full" />
+            <Button type="submit" size="icon" className="rounded-full" disabled={(!text.trim() && !pending.length) || send.isPending || uploading}><Send className="h-4 w-4" /></Button>
           </div>
-        </form>
-      ) : (
-        <div className="border-t p-3 text-center text-xs text-muted-foreground">تەنها ئەدمین دەتوانێت ڕاگەیاندن بنووسێت</div>
-      )}
+      </form>
     </>
   );
 }
@@ -281,93 +413,3 @@ function AttachmentView({ a }: { a: Attachment }) {
   );
 }
 
-function UserSearchButton() {
-  const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const [q, setQ] = useState("");
-  const { data: results, isFetching } = useQuery({
-    queryKey: ["user_search", q],
-    enabled: open && q.trim().length >= 2,
-    queryFn: async () => {
-      const { data, error } = await sb.rpc("search_users", { _q: q.trim() });
-      if (error) throw error;
-      return data as { id: string; username: string | null; full_name: string | null; phone: string | null; is_admin: boolean }[];
-    },
-  });
-
-  async function start(otherId: string) {
-    const { data, error } = await sb.rpc("start_dm", { _other: otherId });
-    if (error) return toast.error(error.message);
-    qc.invalidateQueries({ queryKey: ["conversations"] });
-    setOpen(false); setQ("");
-    toast.success("گفتوگۆ کرایەوە");
-    return data;
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2"><Search className="h-4 w-4" /> گەڕان بۆ بەکارهێنەر</Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader><DialogTitle>گەڕان بە یوزەرنەیم یان ژمارەی مۆبایل</DialogTitle></DialogHeader>
-        <Input placeholder="یوزەرنەیم یان ژمارە..." value={q} onChange={e => setQ(e.target.value)} autoFocus />
-        <div className="max-h-96 overflow-y-auto">
-          {q.trim().length < 2 ? (
-            <p className="p-4 text-center text-sm text-muted-foreground">لانیکەم ٢ پیت بنووسە</p>
-          ) : isFetching ? (
-            <p className="p-4 text-center text-sm text-muted-foreground">گەڕان...</p>
-          ) : !results?.length ? (
-            <p className="p-4 text-center text-sm text-muted-foreground">هیچ بەکارهێنەرێک نەدۆزرایەوە</p>
-          ) : results.map(u => (
-            <button key={u.id} onClick={() => start(u.id)} className="flex w-full items-center justify-between gap-3 rounded px-3 py-2 text-right hover:bg-muted">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  {u.username || u.full_name || "بەکارهێنەر"}
-                  <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] ${u.is_admin ? "bg-primary/15 text-primary" : "bg-muted-foreground/15 text-muted-foreground"}`}>
-                    {u.is_admin ? <><ShieldCheck className="h-3 w-3" /> ئەدمین</> : <><UserIcon className="h-3 w-3" /> بەکارهێنەری ئاسایی</>}
-                  </span>
-                </div>
-                <div className="text-xs text-muted-foreground">{u.full_name}{u.phone ? ` • ${u.phone}` : ""}</div>
-              </div>
-              <MessageCircle className="h-4 w-4 text-muted-foreground" />
-            </button>
-          ))}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function AnnounceButton() {
-  const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  async function submit() {
-    if (!title.trim()) return;
-    const { error } = await sb.rpc("post_announcement", { _title: title, _body: body });
-    if (error) return toast.error(error.message);
-    toast.success("ڕاگەیاندن نێردرا");
-    setOpen(false); setTitle(""); setBody("");
-    qc.invalidateQueries({ queryKey: ["conversations"] });
-  }
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="gap-2"><Megaphone className="h-4 w-4" /> ڕاگەیاندن</Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader><DialogTitle>ڕاگەیاندنی نوێ</DialogTitle></DialogHeader>
-        <Input placeholder="سەردێر" value={title} onChange={e => setTitle(e.target.value)} />
-        <textarea
-          className="min-h-32 w-full rounded-md border bg-background p-3 text-sm"
-          placeholder="ناوەرۆک"
-          value={body}
-          onChange={e => setBody(e.target.value)}
-        />
-        <Button onClick={submit}>ناردن بۆ هەموو بەکارهێنەران</Button>
-      </DialogContent>
-    </Dialog>
-  );
-}
