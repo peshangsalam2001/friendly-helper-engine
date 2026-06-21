@@ -297,7 +297,7 @@ function ChatPanel({ conversationId, title, subtitle }: { conversationId: string
     queryKey: ["public_profiles"],
     queryFn: async () => {
       const { data } = await sb.rpc("get_public_profiles");
-      return (data || []) as { id: string; full_name: string | null }[];
+      return (data || []) as { id: string; full_name: string | null; username: string | null }[];
     },
   });
 
