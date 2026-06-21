@@ -126,6 +126,18 @@ function Messages() {
   const activeConv = convs?.find(c => c.id === activeId);
   const showSearchResults = trimmed.length >= 2;
 
+  // IDs of users I already have a DM with — hide them from search results to avoid duplicates
+  const existingDmUserIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (!convs || !parts || !user) return ids;
+    const dmConvIds = new Set(convs.filter(c => c.type === "dm").map(c => c.id));
+    for (const p of parts) {
+      if (dmConvIds.has(p.conversation_id) && p.user_id !== user.id) ids.add(p.user_id);
+    }
+    return ids;
+  }, [convs, parts, user]);
+  const visibleSearchResults = (searchResults || []).filter(u => !existingDmUserIds.has(u.id));
+
   return (
     <div className="container mx-auto max-w-6xl px-4 py-6">
       <div className="mb-5 flex items-center justify-between">
@@ -162,10 +174,10 @@ function Messages() {
                 </div>
                 {searching ? (
                   <p className="p-4 text-center text-xs text-muted-foreground">گەڕان...</p>
-                ) : !searchResults?.length ? (
+                ) : !visibleSearchResults.length ? (
                   <p className="p-4 text-center text-xs text-muted-foreground">هیچ بەکارهێنەرێک نەدۆزرایەوە</p>
                 ) : (
-                  searchResults.map(u => (
+                  visibleSearchResults.map(u => (
                     <button
                       key={u.id}
                       onClick={() => startDm(u.id)}
