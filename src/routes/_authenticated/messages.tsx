@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth, useIsAdmin } from "@/lib/auth";
-import { Send, Search, Users, MessageCircle, Paperclip, X, ShieldCheck, User as UserIcon, ArrowRight, Headphones } from "lucide-react";
+import { Send, Search, Users, MessageCircle, Paperclip, X, ShieldCheck, ArrowRight, Headphones } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/messages")({ component: Messages });
