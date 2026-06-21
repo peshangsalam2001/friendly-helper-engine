@@ -445,24 +445,7 @@ export type Database = {
       }
     }
     Views: {
-      public_profiles: {
-        Row: {
-          full_name: string | null
-          id: string | null
-          username: string | null
-        }
-        Insert: {
-          full_name?: string | null
-          id?: string | null
-          username?: string | null
-        }
-        Update: {
-          full_name?: string | null
-          id?: string | null
-          username?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       email_for_username: { Args: { _username: string }; Returns: string }
@@ -473,6 +456,14 @@ export type Database = {
         Returns: number
       }
       get_lesson_video: { Args: { _lesson_id: string }; Returns: string }
+      get_public_profiles: {
+        Args: never
+        Returns: {
+          full_name: string
+          id: string
+          username: string
+        }[]
+      }
       get_user_role: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
