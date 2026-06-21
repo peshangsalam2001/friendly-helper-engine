@@ -416,7 +416,7 @@ function ChatPanel({ conversationId, title, subtitle, isAdmin }: { conversationI
                   <div className="mb-0.5 px-3 text-[11px] font-medium text-muted-foreground">{senderName}</div>
                 )}
                 <div className={`flex items-center gap-1.5 ${mine ? "flex-row" : "flex-row-reverse"}`}>
-                  {(isAdmin || mine) && (
+                  {(isAdmin || (mine && Date.now() - new Date(m.created_at).getTime() < 24 * 60 * 60 * 1000)) && (
                     <button
                       type="button"
                       onClick={() => {
