@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/lib/auth";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -136,13 +135,6 @@ function AuthPage() {
     navigate({ to: "/verify-otp", search: { phone: suPhone } });
   }
 
-  async function google() {
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (result.error) { toast.error("داخڵبوون بە گووگڵ سەرنەکەوت"); return; }
-    if (result.redirected) return;
-    navigate({ to: "/account" });
-  }
-
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
@@ -155,13 +147,6 @@ function AuthPage() {
                 <TabsTrigger value="signup">دروستکردنی هەژمار</TabsTrigger>
               </TabsList>
             </Tabs>
-
-            <Button type="button" variant="outline" className="mb-4 w-full" onClick={google}>
-              بەردەوام بوون بە Google
-            </Button>
-            <div className="mb-4 flex items-center gap-3 text-xs text-muted-foreground">
-              <div className="h-px flex-1 bg-border" /> یاخود <div className="h-px flex-1 bg-border" />
-            </div>
 
             {tab === "signin" ? (
               <form onSubmit={signin} className="space-y-4">
